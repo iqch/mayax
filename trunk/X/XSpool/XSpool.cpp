@@ -271,10 +271,11 @@ MStatus	 XSpool::doIt( const MArgList& args)
 			}
 			else
 			{
-				// ...COLLECT SEGMENTS
+				// COLLECT SEGMENTS
 				if(path.hasFn(MFn::kParticle))
 				{
-					// ...COLLECT PARTICLE SEGMENTS
+					// COLLECT PARTICLE SEGMENTS
+					collectParticleSegments(path,segments,true);
 				}
 				else
 				{
@@ -297,7 +298,8 @@ MStatus	 XSpool::doIt( const MArgList& args)
 
 		if(combined)
 		{
-			// ...SORT & DRAW
+			// SORT & DRAW
+			drawSegments(segments,fout,time,true);
 			// DIFFUSE
 			for(int i=0; i<diffuse_count; i++) fout << "diffuse_water_color_layer" << endl;
 		}
