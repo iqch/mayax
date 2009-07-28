@@ -95,6 +95,15 @@ bool XSpool::parseParameters(const MArgList& args)
 		if(flag == "-combined") combined = true;
 
 		if(flag == "-newLayer") newLayer = true;
+
+		if(flag == "-depthMask")
+		{
+			if(i<args.length()-1)
+			{
+				depthMask = args.asString(i+1);
+				useDepthMask = mdepth.Load(depthMask);
+			}
+		}
 	}
 
 	if(outputBackground && useImage) outputBackground = false;
@@ -343,6 +352,11 @@ MStatus	 XSpool::doIt( const MArgList& args)
 	fout.close();
 
 	if(outputAnimation) MProgressWindow::endProgress();
+
+	if(useDepthMask)
+	{
+		mdepth.Release();
+	}
 
 	return MS::kSuccess;
 }
@@ -760,6 +774,29 @@ int XSpool::drawSegments(QList<segment>& segments, ofstream& fout, int& time,boo
 	// SETUP ZI
 	for(int i=0; i<count; i++) { zi.append(i); z.append(segments[i].z); }
 
+	// Z CLIPPING
+	if(useDepthMask)
+	{
+		for(int i=count-1;i>=0;i--)
+		{
+			// Z-CLIPPING
+
+			segment& cs = segments[i];
+
+			float2 ndc = {(cs.start[0]+cs.end[0])/2/width,(cs.start[1]+cs.end[1])/2/height};
+			float out[4];
+			mdepth.Sample(ndc[0],ndc[1],out);
+
+			if(out[0] < cs.z)
+			{
+				zi.removeAt(i);
+				z.removeAt(i);
+			}
+		}
+	}
+
+	count = zi.count();
+
 	// BUBBLE SORTING
 	int xchng = 1;
 	while(xchng > 0) 	//while(0)
@@ -821,7 +858,8 @@ int XSpool::drawSegments(QList<segment>& segments, ofstream& fout, int& time,boo
 	// DRAWING
 	for(int i=0; i<count; i++)
 	{
-		segment cs = segments[zi[i]];
+		segment& cs = segments[zi[i]];
+
 		if(colored) 	fout << "stroke_start" << endl;
 		if(shift)
 		{
