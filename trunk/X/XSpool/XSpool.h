@@ -61,6 +61,33 @@ using namespace std;
 
 #include <QtCore/QList>
 
+class ImageMap
+{
+private:
+	MImage image;
+	MString imageName;
+	unsigned int width, height, depth;
+	unsigned char* iData;
+	float* fData;
+
+	bool _valid;
+
+	bool isInternal;
+
+public:
+	ImageMap();
+	virtual ~ImageMap(void) {};
+
+	bool Load(MString = "");
+	inline bool valid() { return _valid; }
+	inline bool internal() { return isInternal; }
+	int Sample(float u, float v, float* out);
+	bool Release();
+
+public:
+	int getDepth() { return depth; };
+};
+
 #define clamp(x,min,max) (x <= min ? min : (x >= max ? max : x))
 
 // SEGMENT
@@ -122,6 +149,7 @@ private:
 	// masks
 	bool useDepthMask;
 	MString depthMask;
+	ImageMap mdepth;
 	bool useWidthMask;
 	MString widthMask;
 	bool useColormask;
@@ -151,33 +179,6 @@ private:
 	int drawParticle(const MDagPath& path,ofstream& fout,int& time);
 
 	bool isPathVisible(const MDagPath& path);
-};
-
-class ImageMap
-{
-private:
-	MImage image;
-	MString imageName;
-	unsigned int width, height, depth;
-	unsigned char* iData;
-	float* fData;
-
-	bool _valid;
-
-	bool isInternal;
-
-public:
-	ImageMap(/*MString = ""*/);
-	virtual ~ImageMap(void) {};
-
-	bool Load(MString = "");
-	inline bool valid() { return _valid; }
-	inline bool internal() { return isInternal; }
-	int Sample(float u, float v, float* out);
-	bool Release();
-
-public:
-	int getDepth() { return depth; };
 };
 
 
