@@ -2,6 +2,8 @@ Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MayaX", "XSpool\XSpool.vcproj", "{34EBB941-6BB9-4108-9440-05686ADA5607}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XTune", "XTune\XTune.vcproj", "{14EA1148-D648-4248-8824-6C38F0EC6E15}"
+EndProject
 Global
 	GlobalSection(SubversionScc) = preSolution
 		Svn-Managed = True
@@ -22,6 +24,12 @@ Global
 		{34EBB941-6BB9-4108-9440-05686ADA5607}.Release|Win32.Build.0 = Release|Win32
 		{34EBB941-6BB9-4108-9440-05686ADA5607}.Release|x64.ActiveCfg = Release|x64
 		{34EBB941-6BB9-4108-9440-05686ADA5607}.Release|x64.Build.0 = Release|x64
+		{14EA1148-D648-4248-8824-6C38F0EC6E15}.Debug|Win32.ActiveCfg = Debug|x64
+		{14EA1148-D648-4248-8824-6C38F0EC6E15}.Debug|x64.ActiveCfg = Debug|x64
+		{14EA1148-D648-4248-8824-6C38F0EC6E15}.Debug|x64.Build.0 = Debug|x64
+		{14EA1148-D648-4248-8824-6C38F0EC6E15}.Release|Win32.ActiveCfg = Release|x64
+		{14EA1148-D648-4248-8824-6C38F0EC6E15}.Release|x64.ActiveCfg = Release|x64
+		{14EA1148-D648-4248-8824-6C38F0EC6E15}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
