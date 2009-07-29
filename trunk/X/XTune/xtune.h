@@ -1,6 +1,9 @@
 #ifndef XTUNE_H
 #define XTUNE_H
 
+#include "xframelist.h"
+#include "xcanvas.h"
+
 class XTune : public QMainWindow
 {
 	Q_OBJECT
@@ -13,7 +16,10 @@ private slots:
 
 
 private:
-	QStatusBar* statusBar;
+	QStatusBar*	statusBar;
+
+	XFrameList*	frameList;
+	XCanvas*		canvas;
 };
 
 #endif // XTUNE_H
