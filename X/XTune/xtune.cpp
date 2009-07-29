@@ -23,6 +23,18 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 
 	setMenuBar(menuBar);
 
+	// MAIN SPLITTER
+
+	QSplitter *sp = new QSplitter(Qt::Horizontal);
+
+	frameList = new XFrameList;
+	canvas = new XCanvas;
+
+	sp->addWidget(frameList);
+	sp->addWidget(canvas);
+	
+	setCentralWidget(sp);
+
 	// STATUSBAR
 	statusBar = new QStatusBar;
 	setStatusBar(statusBar);
