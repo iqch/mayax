@@ -60,6 +60,10 @@
 using namespace std;
 
 #include <QtCore/QList>
+#include <QtCore/QDataStream>
+#include <QtCore/QFile>
+#include <QtCore/QString>
+#include <QtCore/QStringList>
 
 class ImageMap
 {
@@ -97,7 +101,11 @@ typedef struct _segment {
 	byte color[4];
 	float2 width;
 	float z;
+	quint32 index;
+	quint8 mark;
 } segment;
+
+QDataStream& operator<<(QDataStream&, const  segment&);
 
 class XSpool : public MPxCommand
 {
@@ -118,6 +126,8 @@ private:
 	bool selected;
 	bool shift;
 	bool noClose;
+
+	bool binary;
 
 	// types
 	bool doHair;
@@ -164,19 +174,21 @@ private:
 	int width, height;
 	int3 background;
 
+	quint32 currentIndex;
+
 	bool parseParameters(const MArgList& args);
 
 	bool prepareCameraData();
 
 	bool collectObjects(MDagPathArray& paths);
 
-	int drawStroke(const MDagPath& path,ofstream& fout, int& time);
+	int drawStroke(const MDagPath& path,ofstream& fout, QDataStream& fbin, int& time);
 	int collectStrokeData(const MDagPath& path, QList<segment>& segments, double strokeWidth);
-	int collectSegments(MRenderLineArray& lines, QList<segment>& segments,double strokeWidth);
-	int drawSegments(QList<segment>& segments, ofstream& fout, int& time, bool colored = false);
+	int collectSegments(MRenderLineArray& lines, QList<segment>& segments,double strokeWidth, quint8 mark);
+	int drawSegments(QList<segment>& segments, ofstream& fout, QDataStream& fbin, int& time, bool colored = false);
 
 	int collectParticleSegments(const MDagPath& path, QList<segment>& segments, bool colored);
-	int drawParticle(const MDagPath& path,ofstream& fout,int& time);
+	int drawParticle(const MDagPath& path,ofstream& fout, QDataStream& fbin, int& time);
 
 	bool isPathVisible(const MDagPath& path);
 };
