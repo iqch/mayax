@@ -12,6 +12,8 @@ bool XSpool::parseParameters(const MArgList& args)
 	shift = false;
 	noClose = false;
 
+	binary = false;
+
 	// types
 	doHair = false;
 	doPfx = false;
@@ -48,6 +50,7 @@ bool XSpool::parseParameters(const MArgList& args)
 	{
 		MString flag = args.asString(i);
 
+		if(flag == "-binary") binary = true;
 		if(flag == "-width") outputWidth = true;
 		if(flag == "-fitwidth") fitWidth = true;
 		if(flag == "-depth") outputDepth = true;
@@ -147,17 +150,36 @@ MStatus	 XSpool::doIt( const MArgList& args)
 		MGlobal::executeCommand("workspace -q -rd",location,false,false);
 		location = location + "images/" + filename;
 		if(shift) location = location + ".shift";
-		location = location + ".script.txt";
+		if(binary) location = location + ".xscript.bin";
+		else location = location + ".xscript.txt";
 	}
 	
-	ofstream fout;
-	fout.open(location.asChar(), ios::out);
+	ofstream fout; // XSCRIPT
+	QFile binfile(location.asChar());
+	QDataStream fbin;
+	if(binary)
+	{
+		fout.open(location.asChar(), ios::out);
 
-	fout << setprecision(3) << setiosflags(ios_base::fixed);
+		fout << setprecision(3) << setiosflags(ios_base::fixed);
 
-	// BEGINNING
-	fout << "script_version_number version 9" << endl;
-	fout << "artist_name \"Maya X\"" << endl;
+		// BEGINNING
+		fout << "script_version_number version 9" << endl;
+		fout << "artist_name \"Maya X\"" << endl;
+	}
+	else
+	{
+		bool res = binfile.open(QIODevice::WriteOnly);
+		if(!res)
+		{
+			// ...SHIT
+			setResult(-1);
+			return MS::kFailure;
+		}
+		fbin.setDevice(&binfile);
+
+		fbin << QString("XBIN") << quint32(0x00010000);
+	}
 
 	int time = 194470;
 
@@ -170,6 +192,8 @@ MStatus	 XSpool::doIt( const MArgList& args)
 
 		MProgressWindow::startProgress();
 	}
+
+	if(binary) fbin << outputAnimation;
 
 	for(int frame=startFrame; frame<=endFrame; frame++)
 	{
@@ -184,10 +208,18 @@ MStatus	 XSpool::doIt( const MArgList& args)
 			fileSuffix = sfx;
 			for(int i=0;i<4-sfx.length();i++) fileSuffix = "0" + fileSuffix;
 			MGlobal::viewFrame(frame);
+
+			if(binary) fbin << frame;
 		}
 
 		// PREPARE CAMERA DATA
 		prepareCameraData();
+
+		if(binary)
+		{
+			fbin << width << height << htune << Far << Near << background[0] << background[1] << background[2];
+			for(int i=0;i<16;i++) fbin << proj(i/4,i%4);
+		}
 
 		if(useImage)
 		{
@@ -214,10 +246,14 @@ MStatus	 XSpool::doIt( const MArgList& args)
 			image += splitted[splitted.length()-1];
 			splitted.clear();
 
-			fout << "painter5_open convert_paths 0 \"" << image.asChar() << "\"" << endl;
+			if(binary) fbin << true << QString(image.asChar());
+			else fout << "painter5_open convert_paths 0 \"" << image.asChar() << "\"" << endl;
+
 		}
 		else
 		{
+			if(binary) fbin << false;
+			else
 			// NEW FILE
 			fout << "new_3 \"" << filename.asChar() << "\" width " << width << " height " << height 
 				<< " resolution   72.00000 width_unit 1 height_unit 1 resolution_unit 1 paper_color" 
@@ -226,7 +262,7 @@ MStatus	 XSpool::doIt( const MArgList& args)
 		}
 
 		// LEAVE CANVAS
-		if(newLayer)
+		if(newLayer && !binary)
 		{
 			fout << "rectangle_selection top 0 left 0 bottom " << height << " right " << width << " style 0" << endl;
 			fout << "copy" << endl;
@@ -245,18 +281,42 @@ MStatus	 XSpool::doIt( const MArgList& args)
 
 		collectObjects(paths);
 
+		if(binary)
+		{
+			QStringList sl;
+			for(int i=0;i<paths.length();i++)
+			{
+				MDagPath path = paths[i];
+				MString _ps = path.fullPathName();
+				QString strp = _ps.asChar();
+				sl << strp;
+			}
+			fbin << sl;
+
+			fbin << combined;
+			fbin << diffuse_count;
+		}
+
 		QList<segment> segments;
 
 		for (int _p = 0; _p < paths.length(); _p++)
 		{
-			if(MProgressWindow::isCancelled()) break;
+			if(MProgressWindow::isCancelled())
+			{
+				if(binary) fbin << false;
+				break;
+			}
+
+			if(binary) fbin << true;
+
+			currentIndex = _p;
 
 			MDagPath path = paths[_p];
 
 			if(!combined)
 			{
 				// DRAW NO-COMBINED
-				if(split)
+				if(split && !binary)
 				{
 					// CODE FOR NEW LAYER
 
@@ -273,10 +333,10 @@ MStatus	 XSpool::doIt( const MArgList& args)
 					shift = true;
 				}
 
-				if(path.hasFn(MFn::kParticle)) drawParticle(path, fout, time);
-				else drawStroke(path, fout, time);
+				if(path.hasFn(MFn::kParticle)) drawParticle(path, fout, fbin, time);
+				else drawStroke(path, fout, fbin, time);
 				// DIFFUSE
-				for(int i=0; i<diffuse_count; i++) fout << "diffuse_water_color_layer" << endl;
+				if(!binary) for(int i=0; i<diffuse_count; i++) fout << "diffuse_water_color_layer" << endl;
 			}
 			else
 			{
@@ -308,9 +368,9 @@ MStatus	 XSpool::doIt( const MArgList& args)
 		if(combined)
 		{
 			// SORT & DRAW
-			drawSegments(segments,fout,time,true);
+			drawSegments(segments,fout,fbin,time,true);
 			// DIFFUSE
-			for(int i=0; i<diffuse_count; i++) fout << "diffuse_water_color_layer" << endl;
+			if(!binary) for(int i=0; i<diffuse_count; i++) fout << "diffuse_water_color_layer" << endl;
 		}
 
 		// SAVING, IF ANIMATED
@@ -320,22 +380,30 @@ MStatus	 XSpool::doIt( const MArgList& args)
 			MStringArray splitted;
 			location.split('/',splitted);
 
-			if(savePSD)
+			if(binary)
 			{
-				fout << "save_as \"";
-				for(int i=0; i<splitted.length()-1;i++) fout << splitted[i].asChar() << ":";
-				fout << splitted[splitted.length()-1].asChar() << "." << fileSuffix.asChar() << ".psd\" type 4 flags 1" << endl;
+				fbin << QString(savePSD ? "PSD" : "TIFF");
 			}
 			else
 			{
-				// TIFF
-				fout << "drop_all" << endl;
-				fout << "save_as \"";
-				for(int i=0; i<splitted.length()-1;i++) fout << splitted[i].asChar() << ":";
-				fout << splitted[splitted.length()-1].asChar() << "." << fileSuffix.asChar() << ".tif\" type 2 flags 1" << endl;
+				if(savePSD)
+				{
+					fout << "save_as \"";
+					for(int i=0; i<splitted.length()-1;i++) fout << splitted[i].asChar() << ":";
+					fout << splitted[splitted.length()-1].asChar() << "." << fileSuffix.asChar() << ".psd\" type 4 flags 1" << endl;
+				}
+				else
+				{
+					// TIFF
+					fout << "drop_all" << endl;
+					fout << "save_as \"";
+					for(int i=0; i<splitted.length()-1;i++) fout << splitted[i].asChar() << ":";
+					fout << splitted[splitted.length()-1].asChar() << "." << fileSuffix.asChar() << ".tif\" type 2 flags 1" << endl;
+				}
 			}
 
-			if(!noClose)
+
+			if(!(noClose || binary))
 			{
 				// CLOSING
 				fout << "close" << endl;
@@ -346,10 +414,16 @@ MStatus	 XSpool::doIt( const MArgList& args)
 	}
 
 	// ENDING
-	fout << "end_time date 19 jul 1998 ã. time 14:00" << endl;
-
-	// CLOSING FILE
-	fout.close();
+	if(!binary) 
+	{
+		fout << "end_time date 19 jul 1998 ã. time 14:00" << endl;
+		// CLOSING FILE
+		fout.close();
+	}
+	else
+	{
+		binfile.close();
+	}
 
 	if(outputAnimation) MProgressWindow::endProgress();
 
@@ -358,6 +432,7 @@ MStatus	 XSpool::doIt( const MArgList& args)
 		mdepth.Release();
 	}
 
+	setResult(0);
 	return MS::kSuccess;
 }
 
@@ -533,9 +608,9 @@ int XSpool::collectStrokeData(const MDagPath& path, QList<segment>& segments, do
 	if((lines.length() + leaves.length() + flowers.length()) == 0) return 0;
 
 	// LINES
-	collectSegments(lines, segments,strokeWidth);
-	collectSegments(leaves, segments,strokeWidth);
-	collectSegments(flowers, segments,	strokeWidth);
+	collectSegments(lines, segments,strokeWidth,0);
+	collectSegments(leaves, segments,strokeWidth,1);
+	collectSegments(flowers, segments,	strokeWidth,2);
 
 	lines.deleteArray();
 	leaves.deleteArray();
@@ -544,7 +619,7 @@ int XSpool::collectStrokeData(const MDagPath& path, QList<segment>& segments, do
 	return 1;
 }
 
-int XSpool::drawStroke(const MDagPath& path,ofstream& fout, int& time)
+int XSpool::drawStroke(const MDagPath& path,ofstream& fout, QDataStream& fbin, int& time)
 {
 	MStatus status;
 
@@ -568,12 +643,12 @@ int XSpool::drawStroke(const MDagPath& path,ofstream& fout, int& time)
 	collectStrokeData(path,segments,strokeWidth);
 
 	// DRAW SEGMENTS
-	drawSegments(segments, fout, time, true);
+	drawSegments(segments,fout,fbin,time, true);
 
 	return segments.count();
 };
 
-int XSpool::collectSegments(MRenderLineArray& lines, QList<segment>& segments, double strokeWidth)
+int XSpool::collectSegments(MRenderLineArray& lines, QList<segment>& segments, double strokeWidth, quint8 mark)
 {
 	MStatus status;
 
@@ -649,6 +724,9 @@ int XSpool::collectSegments(MRenderLineArray& lines, QList<segment>& segments, d
 			cs.color[0] = clamp(255*((colors[j][0]+colors[j+1][0])/2.0),0,255);
 			cs.color[1] = clamp(255*((colors[j][1]+colors[j+1][1])/2.0),0,255);
 			cs.color[2] = clamp(255*((colors[j][2]+colors[j+1][2])/2.0),0,255);
+
+			cs.index = currentIndex;
+			cs.mark = mark;
 
 			segments.append(cs);
 		}
@@ -743,12 +821,15 @@ int XSpool::collectParticleSegments(const MDagPath& path, QList<segment>& segmen
 			cs.color[2] = clamp(255*(c[i][2]),0,255);
 		}
 
+		cs.index = currentIndex;
+		cs.mark = 3;
+
 		segments.append(cs);
 	}
 
 	return 1;
 }
-int XSpool::drawParticle(const MDagPath& path,ofstream& fout, int& time)
+int XSpool::drawParticle(const MDagPath& path,ofstream& fout, QDataStream& fbin, int& time)
 {
 	MStatus status;
 	MFnParticleSystem ps(path, &status);
@@ -759,12 +840,12 @@ int XSpool::drawParticle(const MDagPath& path,ofstream& fout, int& time)
 	QList<segment> segments;
 
 	collectParticleSegments(path, segments, colored);
-	drawSegments(segments, fout, time, colored);
+	drawSegments(segments, fout, fbin, time, colored);
 
 	return 0;
 }
 
-int XSpool::drawSegments(QList<segment>& segments, ofstream& fout, int& time,bool colored)
+int XSpool::drawSegments(QList<segment>& segments, ofstream& fout, QDataStream& fbin, int& time,bool colored)
 {
 	QList<float> z;
 	QList<unsigned long> zi;
@@ -799,7 +880,7 @@ int XSpool::drawSegments(QList<segment>& segments, ofstream& fout, int& time,boo
 
 	// BUBBLE SORTING
 	int xchng = 1;
-	while(xchng > 0) 	//while(0)
+	while(xchng > 0)
 	{
 		xchng = 0;
 		for(int i=1;i<count;i++)
@@ -860,23 +941,30 @@ int XSpool::drawSegments(QList<segment>& segments, ofstream& fout, int& time,boo
 	{
 		segment& cs = segments[zi[i]];
 
-		if(colored) 	fout << "stroke_start" << endl;
-		if(shift)
+		if(binary)
 		{
-			cs.start[0] += 50;	cs.start[1] += 50;
-			cs.end[0] += 50;	cs.end[1] += 50;
+			fbin << cs;
 		}
-		// COLOR
-		if(colored) 	fout << "color red   " << short(cs.color[0]) << " green " << short(cs.color[1])  << " blue " << short(cs.color[2])  << endl;
+		else
+		{
+			if(colored) 	fout << "stroke_start" << endl;
+			if(shift)
+			{
+				cs.start[0] += 50;	cs.start[1] += 50;
+				cs.end[0] += 50;	cs.end[1] += 50;
+			}
+			// COLOR
+			if(colored) 	fout << "color red   " << short(cs.color[0]) << " green " << short(cs.color[1])  << " blue " << short(cs.color[2])  << endl;
 
-		// POINT
-		fout << "pnt x  " << cs.start[0] << " y " << cs.start[1] << " time " << time++ << " prs " << cs.width[0] << endl;
-		fout << "pnt x  " << cs.end[0] << " y " << cs.end[1] << " time " << time++ << " prs " << cs.width[1] << endl;
+			// POINT
+			fout << "pnt x  " << cs.start[0] << " y " << cs.start[1] << " time " << time++ << " prs " << cs.width[0] << endl;
+			fout << "pnt x  " << cs.end[0] << " y " << cs.end[1] << " time " << time++ << " prs " << cs.width[1] << endl;
 
-		if(colored) fout << "stroke_end" << endl;
+			if(colored) fout << "stroke_end" << endl;
+		}
 	}
 
-	fout << flush;
+	if(!binary) fout << flush;
 
 	return 0;
 }
@@ -1011,4 +1099,14 @@ int ImageMap::Sample(float u, float v, float* out)
 			}
 	}
 	return depth;
+};
+
+QDataStream& operator<<(QDataStream& st, const segment& sg)
+{
+	st << sg.start[0]	<<  sg.start[1];
+	st << sg.end[0]		<< sg.end[1];
+	st << sg.width[0]	<< sg.width[1];
+	st << sg.z				<< sg.index << sg.mark;
+	st << sg.color[0]	<< sg.color[1] << sg.color[2] << sg.color[3];
+	return st;
 };
