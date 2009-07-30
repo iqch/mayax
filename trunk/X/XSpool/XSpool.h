@@ -60,6 +60,7 @@
 using namespace std;
 
 #include <QtCore/QList>
+#include <QtCore/QMap>
 #include <QtCore/QDataStream>
 #include <QtCore/QFile>
 #include <QtCore/QString>

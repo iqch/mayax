@@ -157,7 +157,7 @@ MStatus	 XSpool::doIt( const MArgList& args)
 	ofstream fout; // XSCRIPT
 	QFile binfile(location.asChar());
 	QDataStream fbin;
-	if(binary)
+	if(!binary)
 	{
 		fout.open(location.asChar(), ios::out);
 
@@ -847,16 +847,32 @@ int XSpool::drawParticle(const MDagPath& path,ofstream& fout, QDataStream& fbin,
 
 int XSpool::drawSegments(QList<segment>& segments, ofstream& fout, QDataStream& fbin, int& time,bool colored)
 {
-	QList<float> z;
-	QList<unsigned long> zi;
+	//QList<float> z;
+	//QList<unsigned long> zi;
+
+	QMap<float,quint32> zmap;
 
 	int count  = segments.count();
 
 	// SETUP ZI
-	for(int i=0; i<count; i++) { zi.append(i); z.append(segments[i].z); }
+	for(int i=0; i<count; i++)
+	{
+		if(useDepthMask)
+		{
+			segment& cs = segments[i];
+
+			float2 ndc = {(cs.start[0]+cs.end[0])/2/width,(cs.start[1]+cs.end[1])/2/height};
+			float out[4];
+			mdepth.Sample(ndc[0],ndc[1],out);
+
+			if(out[0] < cs.z) continue;
+		}
+		zmap.insert(segments[i].z,i);
+		//zi.append(i); z.append(segments[i].z); 
+	}
 
 	// Z CLIPPING
-	if(useDepthMask)
+	/*if(useDepthMask)
 	{
 		for(int i=count-1;i>=0;i--)
 		{
@@ -898,27 +914,37 @@ int XSpool::drawSegments(QList<segment>& segments, ofstream& fout, QDataStream& 
 				}
 			}
 		}
-	}
+	}*/
 
 	// FIT
 	if(fitWidth)
 	{
 		// NORMALIZATION
 		float maxW = -1; float minW = 10000;
-		for(int i=0; i<count; i++)
+		foreach(quint32 id, zmap)
+		{
+			segment& cs = segments[id];
+			if(cs.width[0] > maxW) maxW = cs.width[0];
+			if(cs.width[1] > maxW) maxW = cs.width[1];
+			if(cs.width[0] < minW) minW = cs.width[0];
+			if(cs.width[1] < minW) minW = cs.width[1];
+		}
+		/*for(int i=0; i<count; i++)
 		{
 			segment& cs = segments[zi[i]];
 			if(cs.width[0] > maxW) maxW = cs.width[0];
 			if(cs.width[1] > maxW) maxW = cs.width[1];
 			if(cs.width[0] < minW) minW = cs.width[0];
 			if(cs.width[1] < minW) minW = cs.width[1];
-		}
+		}*/
 
 		if(maxW == minW)
 		{
-			for(int i=0; i<count; i++)
+			//for(int i=0; i<count; i++)
+			foreach(quint32 id, zmap)
 			{
-				segment& cs = segments[zi[i]];
+				//segment& cs = segments[zi[i]];
+				segment& cs = segments[id];
 				cs.width[0] = 1.0; cs.width[1] = 1.0;
 			}
 		}
@@ -926,9 +952,11 @@ int XSpool::drawSegments(QList<segment>& segments, ofstream& fout, QDataStream& 
 		{
 			float dw = 1/(maxW - minW);
 			{
-				for(int i=0; i<count; i++)
+				//for(int i=0; i<count; i++)
+				foreach(quint32 id, zmap)
 				{
-					segment& cs = segments[zi[i]];
+					//segment& cs = segments[zi[i]];
+					segment& cs = segments[id];
 					cs.width[0] -= minW; cs.width[0] *= dw;  
 					cs.width[1] -= minW; cs.width[1] *= dw;  
 				}
@@ -937,9 +965,13 @@ int XSpool::drawSegments(QList<segment>& segments, ofstream& fout, QDataStream& 
 	}
 
 	// DRAWING
-	for(int i=0; i<count; i++)
+	//for(int i=0; i<count; i++)
+	QList<float> zs = zmap.keys();
+	
+	for(int i=zs.count()-1;i>=0;i--)
 	{
-		segment& cs = segments[zi[i]];
+		segment& cs = segments[zmap[zs[i]]];
+		//segment& cs = segments[zi[i]];
 
 		if(binary)
 		{
