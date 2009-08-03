@@ -3,6 +3,7 @@
 
 #include "xframelist.h"
 #include "xcanvas.h"
+#include "xscene.h"
 
 class XTune : public QMainWindow
 {
@@ -13,13 +14,31 @@ public:
 	~XTune();
 
 private slots:
+	void openFile();
+	void saveFile();
+	void exportScript();
 
+	void frameSelected(int);
 
 private:
 	QStatusBar*	statusBar;
 
 	XFrameList*	frameList;
 	XCanvas*		canvas;
+	XScene*		scene;
+
+	QFileDialog* dlgOpen;
+
+
+	// INTERNAL FIELDS
+
+
+	QList<segment> segments;
+
+	bool animated;
+	QList<frame> frames;
+
+	bool valid;
 };
 
 #endif // XTUNE_H
