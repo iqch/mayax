@@ -10,7 +10,7 @@ public:
 	~XGLPreview();
 
 	bool startList();
-	bool segment(float x1, float y1,QColor c1, float x2, float y2,QColor c2, float w);
+	bool segment(float x1, float y1, float x2, float y2, QColor c, float w);
 	bool endList();
 
 	virtual void initializeGL();
