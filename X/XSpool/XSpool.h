@@ -99,11 +99,11 @@ public:
 typedef struct _segment {
 	float2 start;
 	float2 end;
-	byte color[4];
+	float color[4];
 	float2 width;
 	float z;
 	quint32 index;
-	quint8 mark;
+	quint32 mark;
 } segment;
 
 QDataStream& operator<<(QDataStream&, const  segment&);
@@ -172,7 +172,7 @@ private:
 	double htune;
 	double Far;
 	double Near;
-	int width, height;
+	quint32 width, height;
 	int3 background;
 
 	quint32 currentIndex;
