@@ -59,6 +59,8 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 	canvas = new XCanvas;
 	canvas->setScene(scene);
 
+	canvas->setViewport(new QGLWidget);
+
 	sp->addWidget(frameList);
 
 	connect(frameList,SIGNAL(currentRowChanged(int)),SLOT(frameSelected(int)));

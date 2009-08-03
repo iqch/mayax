@@ -21,6 +21,7 @@
 #include <QtGui/QListWidget>
 
 #include <QtGui/QGraphicsView>
+#include <QtOpenGL/QGLWidget>
 #include <QtGui/QGraphicsScene>
 
 #include <QtGui/QGraphicsRectItem>
