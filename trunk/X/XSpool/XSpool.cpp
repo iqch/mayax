@@ -124,8 +124,10 @@ MStatus	 XSpool::doIt( const MArgList& args)
 	// IMAGE DATA
 	width =512; height = 512;
 	{
-		MGlobal::executeCommand("getAttr defaultResolution.width", width, false, false);
-		MGlobal::executeCommand("getAttr defaultResolution.height", height, false, false);
+		int _width, _height;
+		MGlobal::executeCommand("getAttr defaultResolution.width", _width, false, false);
+		MGlobal::executeCommand("getAttr defaultResolution.height", _height, false, false);
+		width = _width; height = _height;
 	}
 
 	// ABOUT ANIMATION
@@ -199,6 +201,8 @@ MStatus	 XSpool::doIt( const MArgList& args)
 	{
 		if(MProgressWindow::isCancelled()) break;
 
+		if(binary) fbin << true << frame;
+
 		// FILE SUFFIX
 		MString fileSuffix("");
 		if(outputAnimation)
@@ -208,8 +212,6 @@ MStatus	 XSpool::doIt( const MArgList& args)
 			fileSuffix = sfx;
 			for(int i=0;i<4-sfx.length();i++) fileSuffix = "0" + fileSuffix;
 			MGlobal::viewFrame(frame);
-
-			if(binary) fbin << frame;
 		}
 
 		// PREPARE CAMERA DATA
@@ -307,7 +309,7 @@ MStatus	 XSpool::doIt( const MArgList& args)
 				break;
 			}
 
-			if(binary) fbin << true;
+			if(binary && !combined) fbin << true;
 
 			currentIndex = _p;
 
@@ -367,8 +369,11 @@ MStatus	 XSpool::doIt( const MArgList& args)
 
 		if(combined)
 		{
+			if(binary) fbin << true;
 			// SORT & DRAW
 			drawSegments(segments,fout,fbin,time,true);
+			if(binary) fbin << false;
+
 			// DIFFUSE
 			if(!binary) for(int i=0; i<diffuse_count; i++) fout << "diffuse_water_color_layer" << endl;
 		}
@@ -412,6 +417,8 @@ MStatus	 XSpool::doIt( const MArgList& args)
 			MProgressWindow::advanceProgress(1);
 		}
 	}
+
+	if(binary) fbin << false;
 
 	// ENDING
 	if(!binary) 
@@ -721,9 +728,9 @@ int XSpool::collectSegments(MRenderLineArray& lines, QList<segment>& segments, d
 				float tune = pow(1.0/double(max(0.00001,cs.z)),perspective);
 				cs.width[0] *= tune; cs.width[1] *= tune;
 			}
-			cs.color[0] = clamp(255*((colors[j][0]+colors[j+1][0])/2.0),0,255);
-			cs.color[1] = clamp(255*((colors[j][1]+colors[j+1][1])/2.0),0,255);
-			cs.color[2] = clamp(255*((colors[j][2]+colors[j+1][2])/2.0),0,255);
+			cs.color[0] = (colors[j][0]+colors[j+1][0])/2.0;
+			cs.color[1] = (colors[j][1]+colors[j+1][1])/2.0;
+			cs.color[2] = (colors[j][2]+colors[j+1][2])/2.0;
 
 			cs.index = currentIndex;
 			cs.mark = mark;
@@ -816,9 +823,9 @@ int XSpool::collectParticleSegments(const MDagPath& path, QList<segment>& segmen
 
 		if(colored)
 		{
-			cs.color[0] = clamp(255*(c[i][0]),0,255);
-			cs.color[1] = clamp(255*(c[i][1]),0,255);
-			cs.color[2] = clamp(255*(c[i][2]),0,255);
+			cs.color[0] = c[i][0];
+			cs.color[1] = c[i][1];
+			cs.color[2] = c[i][2];
 		}
 
 		cs.index = currentIndex;
@@ -966,9 +973,14 @@ int XSpool::drawSegments(QList<segment>& segments, ofstream& fout, QDataStream& 
 
 	// DRAWING
 	//for(int i=0; i<count; i++)
+
 	QList<float> zs = zmap.keys();
+
+	quint32 zcnt = zs.count();
+
+	if(binary) fbin << zcnt;
 	
-	for(int i=zs.count()-1;i>=0;i--)
+	for(int i=zcnt-1;i>=0;i--)
 	{
 		segment& cs = segments[zmap[zs[i]]];
 		//segment& cs = segments[zi[i]];
@@ -986,7 +998,7 @@ int XSpool::drawSegments(QList<segment>& segments, ofstream& fout, QDataStream& 
 				cs.end[0] += 50;	cs.end[1] += 50;
 			}
 			// COLOR
-			if(colored) 	fout << "color red   " << short(cs.color[0]) << " green " << short(cs.color[1])  << " blue " << short(cs.color[2])  << endl;
+			if(colored) 	fout << "color red   " << short(255*cs.color[0]) << " green " << short(255*cs.color[1])  << " blue " << short(255*cs.color[2])  << endl;
 
 			// POINT
 			fout << "pnt x  " << cs.start[0] << " y " << cs.start[1] << " time " << time++ << " prs " << cs.width[0] << endl;
