@@ -20,12 +20,20 @@ private slots:
 
 	void frameSelected(int);
 
+	void chWidthToggle(bool);
+	void widthTuneChanged();
+
+	void drawFrame();
+
 private:
 	QStatusBar*	statusBar;
 
 	XFrameList*	frameList;
 	XCanvas*		canvas;
 	XScene*		scene;
+
+	QSlider*		slWidth;
+	QCheckBox*	chUseWidth;
 
 	QFileDialog* dlgOpen;
 
@@ -39,6 +47,9 @@ private:
 	QList<frame> frames;
 
 	bool valid;
+
+	int currentFrame;
+	bool useWidth;
 };
 
 #endif // XTUNE_H

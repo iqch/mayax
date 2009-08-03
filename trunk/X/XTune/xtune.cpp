@@ -4,6 +4,8 @@
 XTune::XTune(QWidget *parent, Qt::WFlags flags)
 	: QMainWindow(parent, flags)
 	, valid(false)
+	, currentFrame(-1)
+	, useWidth(false)
 {
 	setMinimumHeight(480);
 	setMinimumWidth(640);
@@ -13,23 +15,45 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 	QMenu* menu = new QMenu("&File");
 	{
 		menu->addAction(QIcon(),"&Open",this,SLOT(openFile()));
-		menu->addAction(QIcon(),"&Save",this,SLOT(saveFile()));
-		QAction* a = menu->addAction(QIcon(),"&Export Script",this,SLOT(exportScript()));
-		a->setEnabled(false);
+		{
+			QAction* a = menu->addAction(QIcon(),"&Save",this,SLOT(saveFile()));
+			a->setEnabled(false);
+		}
+		{
+			QAction* a = menu->addAction(QIcon(),"&Export Script",this,SLOT(exportScript()));
+			a->setEnabled(false);
+		}
 		menu->addSeparator();
-		menu->addAction(QIcon(),"&Quit",this,SLOT(exitApp()));
+		menu->addAction(QIcon(),"&Quit",this,SLOT(close()));
 	}
 
 	menuBar->addMenu(menu);
 
 	setMenuBar(menuBar);
 
+	QToolBar* tb = new QToolBar("Width");
+	addToolBar(Qt::ToolBarArea::TopToolBarArea,tb);
+
+	chUseWidth = new QCheckBox("Use Width");
+	tb->addWidget(chUseWidth);
+	chUseWidth->setChecked(false);
+	connect(chUseWidth,SIGNAL(toggled(bool)),SLOT(chWidthToggle(bool)));
+
+	slWidth = new QSlider(Qt::Horizontal);
+	slWidth->setMaximum(1000);
+	slWidth->setMinimum(0);
+	slWidth->setValue(25);
+	slWidth->setEnabled(false);
+	slWidth->setTracking(false);
+	connect(slWidth,SIGNAL(valueChanged(int)),SLOT(widthTuneChanged()));
+	tb->addWidget(slWidth);
+
 	// MAIN SPLITTER
 
 	QSplitter *sp = new QSplitter(Qt::Horizontal);
 
 	frameList = new XFrameList;
-	frameList->setMaximumWidth(120);
+	frameList->setMaximumWidth(125);
 
 	scene = new XScene;
 	canvas = new XCanvas;
@@ -48,7 +72,7 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 	setStatusBar(statusBar);
 
 	// SERVICES
-	dlgOpen = new QFileDialog(this,"Open Bin","/","Binary (*.*)");
+	dlgOpen = new QFileDialog(this,"Open Bin","/","Binary (*.bin)");
 }
 
 XTune::~XTune() {}
@@ -67,12 +91,16 @@ void XTune::openFile()
 	if(!fi.open(QIODevice::ReadOnly)) return;
 
 	// CLEANUP
+	valid = false;
 	for(int i=0;i<frames.count();i++)
 	{
 		quint32 segs = frames[i].segments.count();
 		for(int j=0;j<segs;j++) delete frames[i].segments[j];
 	}
 	frames.clear();
+
+	currentFrame = -1;
+
 
 	// LOAD
 	QDataStream in(&fi);
@@ -147,24 +175,67 @@ void XTune::openFile()
 	while (true);
 
 	frameList->addItems(_frameList);
+
+	valid = true;
 };
 
 void XTune::frameSelected(int _frame)
 {
-	scene->clear();
-	frame F = frames[_frame];
+	currentFrame = _frame;
+	drawFrame();
+};
 
+void XTune::drawFrame()
+{
+	if(!valid) return;
+	if(currentFrame == -1) return;
+	if(currentFrame >= frames.count()) return;
+
+	scene->clear();
+
+	frame F = frames[currentFrame];
+
+	useWidth = chUseWidth->isChecked();
+	float wTune = 1.0f;
+	if(useWidth)
+	{
+		float val = slWidth->value();
+		wTune = val/25.0f;
+	}
+
+	// DRAW FRAMERECTANGLE
+	{
+		QGraphicsRectItem* ri = new QGraphicsRectItem(0,0,F.width,F.height,NULL,scene);
+		QPen riPen = QPen(QColor(0,0,0));
+		riPen.setStyle(Qt::DashLine);
+		riPen.setWidth(2);
+		ri->setPen(riPen);
+	}
+
+	// DRAW SEGMENTS
 	for(int i=0;i<F.segments.count();i++)
 	{
 		QList<segment> &block = *(F.segments[i]);
 		foreach(segment s, block)
 		{
-			QGraphicsLineItem* item = new QGraphicsLineItem(s.start[0],s.start[1],s.end[0],s.end[1],NULL,scene);
-			item->setPen(QPen(QColor(s.color[0]*255,s.color[1]*255,s.color[2]*255)));
+			QPen p(QColor(s.color[0]*255,s.color[1]*255,s.color[2]*255));
+			p.setCapStyle(Qt::RoundCap);
+			if(useWidth) p.setWidthF(wTune*(s.width[0]+s.width[1])/2);		
+			QGraphicsLineItem* item = scene->addLine(s.start[0],s.start[1],s.end[0],s.end[1],p);
 		}
 	}
 };
 
+void XTune::chWidthToggle(bool toggle)
+{
+	slWidth->setEnabled(toggle);
+	drawFrame();
+}
+
+void XTune::widthTuneChanged()
+{
+	drawFrame();
+};
 void XTune::saveFile(){};
 void XTune::exportScript(){};
 

@@ -10,6 +10,8 @@
 #include <QtGui>
 #include <QtGui/QMainWindow>
 
+#include <QtGui/QToolBar>
+
 #include <QtGui/QMenuBar>
 #include <QtGui/QMenu>
 #include <QtGui/QAction>
@@ -17,10 +19,21 @@
 #include <QtGui/QSplitter>
 
 #include <QtGui/QListWidget>
+
 #include <QtGui/QGraphicsView>
 #include <QtGui/QGraphicsScene>
 
+#include <QtGui/QGraphicsRectItem>
 #include <QtGui/QGraphicsLineItem>
+
+#include <QtGui/QSlider>
+#include <QtGui/QCheckBox>
+
+#include <QtGui/QHBoxLayout>
+#include <QtGui/QVBoxLayout>
+
+#include <QtGui/QPen>
+#include <QtGui/QBrush>
 
 #include <QtGui/QStatusBar>
 
