@@ -23,7 +23,12 @@ private slots:
 	void chWidthToggle(bool);
 	void widthTuneChanged();
 
+	void chReduceToggle(bool);
+	void reduceChanged();
+
 	void drawFrame();
+
+	void preview();
 
 private:
 	QStatusBar*	statusBar;
@@ -34,6 +39,9 @@ private:
 
 	QSlider*		slWidth;
 	QCheckBox*	chUseWidth;
+
+	QSlider*		slReduce;
+	QCheckBox*	chUseReduce;
 
 	QFileDialog* dlgOpen;
 

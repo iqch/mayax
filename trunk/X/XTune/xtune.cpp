@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "xtune.h"
 
+#include "xglpreview.h"
+
 XTune::XTune(QWidget *parent, Qt::WFlags flags)
 	: QMainWindow(parent, flags)
 	, valid(false)
@@ -31,22 +33,50 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 
 	setMenuBar(menuBar);
 
-	QToolBar* tb = new QToolBar("Width");
-	addToolBar(Qt::ToolBarArea::TopToolBarArea,tb);
+	// TOOL BAR WIDTH
+	{
+		QToolBar* tb = new QToolBar("Width");
+		addToolBar(Qt::ToolBarArea::TopToolBarArea,tb);
 
-	chUseWidth = new QCheckBox("Use Width");
-	tb->addWidget(chUseWidth);
-	chUseWidth->setChecked(false);
-	connect(chUseWidth,SIGNAL(toggled(bool)),SLOT(chWidthToggle(bool)));
+		chUseWidth = new QCheckBox("Use Width");
+		tb->addWidget(chUseWidth);
+		chUseWidth->setChecked(false);
+		connect(chUseWidth,SIGNAL(toggled(bool)),SLOT(chWidthToggle(bool)));
 
-	slWidth = new QSlider(Qt::Horizontal);
-	slWidth->setMaximum(1000);
-	slWidth->setMinimum(0);
-	slWidth->setValue(25);
-	slWidth->setEnabled(false);
-	slWidth->setTracking(false);
-	connect(slWidth,SIGNAL(valueChanged(int)),SLOT(widthTuneChanged()));
-	tb->addWidget(slWidth);
+		slWidth = new QSlider(Qt::Horizontal);
+		slWidth->setMaximum(1000);
+		slWidth->setMinimum(0);
+		slWidth->setValue(25);
+		slWidth->setEnabled(false);
+		slWidth->setTracking(false);
+		connect(slWidth,SIGNAL(valueChanged(int)),SLOT(widthTuneChanged()));
+		tb->addWidget(slWidth);
+
+		QPushButton* btnPreview = new QPushButton("Preview...");
+		//btnPreview->setFlat(true);
+		connect(btnPreview,SIGNAL(clicked(bool)),SLOT(preview()));
+		tb->addWidget(btnPreview);
+	}
+
+	// TOOLBAR REDUCE
+	{
+		QToolBar* tb = new QToolBar("Reduce");
+		addToolBar(Qt::ToolBarArea::BottomToolBarArea,tb);
+
+		chUseReduce = new QCheckBox("Reduce");
+		tb->addWidget(chUseReduce);
+		chUseReduce->setChecked(false);
+		connect(chUseReduce,SIGNAL(toggled(bool)),SLOT(chReduceToggle(bool)));
+
+		slReduce = new QSlider(Qt::Horizontal);
+		slReduce->setMaximum(1000);
+		slReduce->setMinimum(0);
+		slReduce->setValue(1000);
+		slReduce->setEnabled(false);
+		slReduce->setTracking(false);
+		connect(slReduce,SIGNAL(valueChanged(int)),SLOT(reduceChanged()));
+		tb->addWidget(slReduce);
+	}
 
 	// MAIN SPLITTER
 
@@ -59,7 +89,7 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 	canvas = new XCanvas;
 	canvas->setScene(scene);
 
-	canvas->setViewport(new QGLWidget);
+	//canvas->setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
 
 	sp->addWidget(frameList);
 
@@ -205,6 +235,15 @@ void XTune::drawFrame()
 		wTune = val/25.0f;
 	}
 
+	bool reduce = chUseReduce->isChecked();
+	float reduceFactor = 1.0;
+	if(reduce)
+	{
+		reduceFactor = slReduce->value()/1000.0f;
+	}
+
+	srand(0);
+
 	// DRAW FRAMERECTANGLE
 	{
 		QGraphicsRectItem* ri = new QGraphicsRectItem(0,0,F.width,F.height,NULL,scene);
@@ -220,6 +259,12 @@ void XTune::drawFrame()
 		QList<segment> &block = *(F.segments[i]);
 		foreach(segment s, block)
 		{
+			if(reduce)
+			{
+				long rnd = rand();
+				float r = float(rnd)/RAND_MAX;
+				if(r > reduceFactor) continue;
+			}
 			QPen p(QColor(s.color[0]*255,s.color[1]*255,s.color[2]*255));
 			p.setCapStyle(Qt::RoundCap);
 			if(useWidth) p.setWidthF(wTune*(s.width[0]+s.width[1])/2);		
@@ -238,6 +283,32 @@ void XTune::widthTuneChanged()
 {
 	drawFrame();
 };
+
+void XTune::chReduceToggle(bool val)
+{
+	slReduce->setEnabled(val);
+	drawFrame();
+};
+
+void XTune::reduceChanged()
+{
+	drawFrame();
+};
+
 void XTune::saveFile(){};
 void XTune::exportScript(){};
+
+void XTune::preview()
+{
+	if(!valid) return;
+	if(currentFrame == -1) return;
+	if(currentFrame >= frames.count()) return;
+
+	frame F = frames[currentFrame];
+
+	XGLPreview* glw = new XGLPreview;
+	glw->setGeometry(5,45,F.width,F.height);
+	glw->setFixedSize(F.width,F.height);
+	glw->show();
+};
 
