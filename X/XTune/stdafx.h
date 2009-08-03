@@ -30,6 +30,8 @@
 #include <QtGui/QSlider>
 #include <QtGui/QCheckBox>
 
+#include <QtGui/QPushButton>
+
 #include <QtGui/QHBoxLayout>
 #include <QtGui/QVBoxLayout>
 
@@ -39,6 +41,10 @@
 #include <QtGui/QStatusBar>
 
 #include <QtGui/QFileDialog>
+
+// CRT
+
+#include <stdlib.h>
 
 
 // DATA STRUCTS
