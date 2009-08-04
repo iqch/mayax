@@ -49,7 +49,12 @@ void XGLPreview::initializeGL()
 
 void XGLPreview::resizeGL(int width, int height)
 {
+	glViewport(0,0,width,height);
 
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0, width, height, 0, -1, 1.0);
+	glMatrixMode(GL_MODELVIEW);
 };
 
 void XGLPreview::paintGL()
