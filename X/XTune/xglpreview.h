@@ -9,18 +9,18 @@ public:
 	XGLPreview(QWidget *parent = NULL);
 	~XGLPreview();
 
-	bool startList();
-	bool segment(float x1, float y1, float x2, float y2, QColor c, float w);
-	bool endList();
+	//bool startList();
+	//bool segment(float x1, float y1, float x2, float y2, QColor c, float w);
+	//bool endList();
 
 	virtual void initializeGL();
 	virtual void resizeGL(int width, int height);
 	virtual void paintGL();
 
-private:
+	QList<segment> segments;
 
-	bool valid;
-	GLint list;
+private:
+	//GLint list;
 	
 };
 

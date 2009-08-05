@@ -17,6 +17,7 @@
 #include <QtGui/QAction>
 
 #include <QtGui/QSplitter>
+#include <QtGui/QTabWidget>
 
 #include <QtGui/QListWidget>
 
@@ -85,4 +86,8 @@ typedef struct _frame
 
 QDataStream& operator<<(QDataStream&, const  segment&);
 QDataStream& operator>>(QDataStream&, segment&);
+
+#define clamp(x,min,max) (x <= min ? min : (x >= max ? max : x))
+
+
 
