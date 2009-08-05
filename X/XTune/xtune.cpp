@@ -52,10 +52,10 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 		connect(slWidth,SIGNAL(valueChanged(int)),SLOT(widthTuneChanged()));
 		tb->addWidget(slWidth);
 
-		QPushButton* btnPreview = new QPushButton("Preview...");
+		//QPushButton* btnPreview = new QPushButton("Preview...");
 		//btnPreview->setFlat(true);
-		connect(btnPreview,SIGNAL(clicked(bool)),SLOT(showPreview()));
-		tb->addWidget(btnPreview);
+		//connect(btnPreview,SIGNAL(clicked(bool)),SLOT(showPreview()));
+		//tb->addWidget(btnPreview);
 	}
 
 	// TOOLBAR REDUCE
@@ -95,7 +95,7 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 
 	tab->addTab(canvas,QIcon(),"Scene");
 
-	XGLPreview* preview = new XGLPreview;
+	preview = new XGLPreview;
 
 	tab->addTab(preview, QIcon(), "Preview");
 
@@ -226,6 +226,66 @@ void XTune::frameSelected(int _frame)
 {
 	currentFrame = _frame;
 	drawFrame();
+
+	// PREVIEW WINDOW
+
+	frame F = frames[currentFrame];
+
+	preview->fWidth = F.width;
+	preview->fHeight = F.height;
+
+	preview->setClearColor(QColor(F.background[0],F.background[1],F.background[2]));
+
+	preview->segments.clear();
+
+	// DRAW
+	useWidth = chUseWidth->isChecked();
+	float wTune = 1.0f;
+	if(useWidth)
+	{
+		float val = slWidth->value();
+		wTune = val/25.0f;
+	}
+
+	bool reduce = chUseReduce->isChecked();
+	float reduceFactor = 1.0;
+	if(reduce)
+	{
+		reduceFactor = slReduce->value()/1000.0f;
+	}
+
+	srand(0);
+
+	// DRAW SEGMENTS
+	for(int i=0;i<F.segments.count();i++)
+	{
+		QList<segment> &block = *(F.segments[i]);
+		foreach(segment s, block)
+		{
+			if(reduce)
+			{
+				long rnd = rand();
+				float r = float(rnd)/RAND_MAX;
+				if(r > reduceFactor) continue;
+			}
+			float w = 1.0;
+			if(useWidth) w = wTune*(s.width[0]+s.width[1])/2;
+
+			segment _S;
+
+			_S.color[0] = s.color[0]; _S.color[1] = s.color[1];
+			_S.color[2] = s.color[2]; _S.color[3] = s.color[3];
+
+			_S.start[0] = s.start[0]; _S.start[1] = s.start[1];
+			_S.end[0] = s.end[0]; _S.end[1] = s.end[1];
+			//_S.z = s.z; 
+
+
+			_S.width[0] = w; _S.width[1] = w;
+
+			preview->segments.append(_S);
+		}
+	}
 };
 
 void XTune::drawFrame()
@@ -309,7 +369,7 @@ void XTune::reduceChanged()
 void XTune::saveFile(){};
 void XTune::exportScript(){};
 
-void XTune::showPreview()
+/*void XTune::showPreview()
 {
 	if(!valid) return;
 	if(currentFrame == -1) return;
@@ -370,17 +430,11 @@ void XTune::showPreview()
 
 			glw->segments.append(_S);
 
-			/*glw->segment(
-				s.start[0],s.start[1],s.end[0],s.end[1],
-				QColor(
-				clamp(s.color[0]*255,0,255),
-				clamp(s.color[1]*255,0,255),
-				clamp(s.color[2]*255,0,255)),w);*/
 		}
 	}
 
 	//glw->endList();
 	glw->show();
 
-};
+};*/
 
