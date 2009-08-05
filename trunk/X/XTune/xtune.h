@@ -4,6 +4,7 @@
 #include "xframelist.h"
 #include "xcanvas.h"
 #include "xscene.h"
+#include "xglpreview.h"
 
 class XTune : public QMainWindow
 {
@@ -28,7 +29,7 @@ private slots:
 
 	void drawFrame();
 
-	void preview();
+	void showPreview();
 
 private:
 	QStatusBar*	statusBar;
@@ -36,6 +37,8 @@ private:
 	XFrameList*	frameList;
 	XCanvas*		canvas;
 	XScene*		scene;
+
+	XGLPreview* preview;
 
 	QSlider*		slWidth;
 	QCheckBox*	chUseWidth;
