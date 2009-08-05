@@ -29,7 +29,7 @@ private slots:
 
 	void drawFrame();
 
-	void showPreview();
+	//void showPreview();
 
 private:
 	QStatusBar*	statusBar;

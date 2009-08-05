@@ -17,7 +17,12 @@ public:
 	virtual void resizeGL(int width, int height);
 	virtual void paintGL();
 
+	void setClearColor(QColor C);
+
 	QList<segment> segments;
+
+	int fWidth, fHeight;
+	QColor background;
 
 private:
 	//GLint list;
