@@ -407,6 +407,18 @@
 			SourceControlFiles="false"
 			>
 			<File
+				RelativePath=".\GeneratedFiles\Release\moc_xcanvas.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath=".\GeneratedFiles\Debug\moc_xcanvas.cpp"
 				>
 				<FileConfiguration
@@ -426,30 +438,6 @@
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)\$(InputName)1.obj"
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\GeneratedFiles\Release\moc_xcanvas.cpp"
-				>
-				<FileConfiguration
-					Name="Debug|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\GeneratedFiles\Release\moc_xframelist.cpp"
-				>
-				<FileConfiguration
-					Name="Debug|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
 			</File>
@@ -477,15 +465,20 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\GeneratedFiles\Release\moc_xglpreview.cpp"
+				RelativePath=".\GeneratedFiles\Release\moc_xframelist.cpp"
 				>
 				<FileConfiguration
-					Name="Release|x64"
+					Name="Debug|x64"
+					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\GeneratedFiles\Release\moc_xglpreview.cpp"
+				>
 				<FileConfiguration
 					Name="Debug|x64"
 					ExcludedFromBuild="true"
@@ -497,6 +490,29 @@
 			</File>
 			<File
 				RelativePath=".\GeneratedFiles\Debug\moc_xglpreview.cpp"
+				>
+				<FileConfiguration
+					Name="Release|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\$(InputName)1.obj"
+						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)\$(InputName)1.obj"
+						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\GeneratedFiles\Debug\moc_xscene.cpp"
 				>
 				<FileConfiguration
 					Name="Release|x64"
@@ -531,7 +547,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\GeneratedFiles\Debug\moc_xscene.cpp"
+				RelativePath=".\GeneratedFiles\Debug\moc_xtune.cpp"
 				>
 				<FileConfiguration
 					Name="Release|x64"
@@ -539,8 +555,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\$(InputName)1.obj"
-						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -548,8 +562,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\$(InputName)1.obj"
-						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 					/>
 				</FileConfiguration>
 			</File>
@@ -566,25 +578,6 @@
 				<FileConfiguration
 					Name="Debug|x64"
 					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\GeneratedFiles\Debug\moc_xtune.cpp"
-				>
-				<FileConfiguration
-					Name="Release|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"

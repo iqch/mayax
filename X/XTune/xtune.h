@@ -35,8 +35,8 @@ private:
 	QStatusBar*	statusBar;
 
 	XFrameList*	frameList;
-	XCanvas*		canvas;
-	XScene*		scene;
+	//XCanvas*		canvas;
+	//XScene*		scene;
 
 	XGLPreview* preview;
 
