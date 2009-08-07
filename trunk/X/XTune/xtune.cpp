@@ -48,14 +48,14 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 		slWidth->setMinimum(0);
 		slWidth->setValue(25);
 		slWidth->setEnabled(false);
-		slWidth->setTracking(false);
+		//slWidth->setTracking(false);
 		connect(slWidth,SIGNAL(valueChanged(int)),SLOT(widthTuneChanged()));
 		tb->addWidget(slWidth);
 
-		//QPushButton* btnPreview = new QPushButton("Preview...");
-		//btnPreview->setFlat(true);
-		//connect(btnPreview,SIGNAL(clicked(bool)),SLOT(showPreview()));
-		//tb->addWidget(btnPreview);
+		QPushButton* btnPreview = new QPushButton("Render...");
+		btnPreview->setFlat(true);
+		connect(btnPreview,SIGNAL(clicked(bool)),SLOT(renderFrame()));
+		tb->addWidget(btnPreview);
 	}
 
 	// TOOLBAR REDUCE
@@ -73,7 +73,7 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 		slReduce->setMinimum(0);
 		slReduce->setValue(1000);
 		slReduce->setEnabled(false);
-		slReduce->setTracking(false);
+		//slReduce->setTracking(false);
 		connect(slReduce,SIGNAL(valueChanged(int)),SLOT(reduceChanged()));
 		tb->addWidget(slReduce);
 	}
@@ -401,6 +401,7 @@ void XTune::drawFrame()
 		}
 	}
 
+	preview->adjustSize();
 	preview->updateGL();
 
 };
@@ -430,6 +431,10 @@ void XTune::reduceChanged()
 void XTune::saveFile(){};
 void XTune::exportScript(){};
 
+void XTune::renderFrame()
+{
+
+}
 /*void XTune::showPreview()
 {
 	if(!valid) return;
