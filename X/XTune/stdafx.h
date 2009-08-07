@@ -1,13 +1,16 @@
+#pragma once
+
+// CRT
+
+#include <math.h>
 
 // QT
 
-#include <QtCore>
+//#include <QtCore>
 #include <QtCore/QDataStream>
 #include <QtCore/QFile>
 
-
-
-#include <QtGui>
+//#include <QtGui>
 #include <QtGui/QMainWindow>
 
 #include <QtGui/QToolBar>
@@ -47,6 +50,10 @@
 
 #include <stdlib.h>
 
+// RI
+
+#include <ri.h>
+#include <ric.h>
 
 // DATA STRUCTS
 typedef struct _segment {
