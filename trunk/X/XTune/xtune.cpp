@@ -87,13 +87,13 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 
 	sp->addWidget(frameList);
 
-	scene = new XScene;
-	canvas = new XCanvas;
-	canvas->setScene(scene);
+	//scene = new XScene;
+	//canvas = new XCanvas;
+	//canvas->setScene(scene);
 
 	QTabWidget* tab = new QTabWidget;
 
-	tab->addTab(canvas,QIcon(),"Scene");
+	//tab->addTab(canvas,QIcon(),"Scene");
 
 	preview = new XGLPreview;
 
@@ -227,9 +227,11 @@ void XTune::frameSelected(int _frame)
 	currentFrame = _frame;
 	drawFrame();
 
+	return;
+
 	// PREVIEW WINDOW
 
-	frame F = frames[currentFrame];
+	/*frame F = frames[currentFrame];
 
 	preview->fWidth = F.width;
 	preview->fHeight = F.height;
@@ -285,7 +287,7 @@ void XTune::frameSelected(int _frame)
 
 			preview->segments.append(_S);
 		}
-	}
+	}*/
 };
 
 void XTune::drawFrame()
@@ -294,7 +296,7 @@ void XTune::drawFrame()
 	if(currentFrame == -1) return;
 	if(currentFrame >= frames.count()) return;
 
-	scene->clear();
+	//scene->clear();
 
 	frame F = frames[currentFrame];
 
@@ -313,7 +315,7 @@ void XTune::drawFrame()
 		reduceFactor = slReduce->value()/1000.0f;
 	}
 
-	srand(0);
+	/*srand(0);
 
 	// DRAW FRAMERECTANGLE
 	{
@@ -341,7 +343,66 @@ void XTune::drawFrame()
 			if(useWidth) p.setWidthF(wTune*(s.width[0]+s.width[1])/2);		
 			QGraphicsLineItem* item = scene->addLine(s.start[0],s.start[1],s.end[0],s.end[1],p);
 		}
+	}*/
+
+	preview->fWidth = F.width;
+	preview->fHeight = F.height;
+
+	preview->setClearColor(QColor(F.background[0],F.background[1],F.background[2]));
+
+	preview->segments.clear();
+
+	//// DRAW
+	//useWidth = chUseWidth->isChecked();
+	//float wTune = 1.0f;
+	//if(useWidth)
+	//{
+	//	float val = slWidth->value();
+	//	wTune = val/25.0f;
+	//}
+
+	//bool reduce = chUseReduce->isChecked();
+	//float reduceFactor = 1.0;
+	//if(reduce)
+	//{
+	//	reduceFactor = slReduce->value()/1000.0f;
+	//}
+
+	srand(0);
+
+	// DRAW SEGMENTS
+	for(int i=0;i<F.segments.count();i++)
+	{
+		QList<segment> &block = *(F.segments[i]);
+		foreach(segment s, block)
+		{
+			if(reduce)
+			{
+				long rnd = rand();
+				float r = float(rnd)/RAND_MAX;
+				if(r > reduceFactor) continue;
+			}
+			float w = 1.0;
+			if(useWidth) w = wTune*(s.width[0]+s.width[1])/2;
+
+			segment _S;
+
+			_S.color[0] = s.color[0]; _S.color[1] = s.color[1];
+			_S.color[2] = s.color[2]; _S.color[3] = s.color[3];
+
+			_S.start[0] = s.start[0]; _S.start[1] = s.start[1];
+			_S.end[0] = s.end[0]; _S.end[1] = s.end[1];
+			//_S.z = s.z; 
+
+
+			_S.width[0] = w; _S.width[1] = w;
+
+			preview->segments.append(_S);
+		}
 	}
+
+	preview->updateGL();
+
 };
 
 void XTune::chWidthToggle(bool toggle)
