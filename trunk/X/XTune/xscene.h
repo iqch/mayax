@@ -1,7 +1,7 @@
 #ifndef XSCENE_H
 #define XSCENE_H
 
-#include <QGraphicsScene >
+//#include <QGraphicsScene >
 
 class XScene : public QGraphicsScene 
 {

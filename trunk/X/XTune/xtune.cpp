@@ -3,6 +3,8 @@
 
 #include "xglpreview.h"
 
+void riDrawSegment(segment& s, float w);
+
 XTune::XTune(QWidget *parent, Qt::WFlags flags)
 	: QMainWindow(parent, flags)
 	, valid(false)
@@ -433,7 +435,116 @@ void XTune::exportScript(){};
 
 void XTune::renderFrame()
 {
+	if(!valid) return;
+	if(currentFrame == -1) return;
+	if(currentFrame >= frames.count()) return;
 
+	frame F = frames[currentFrame];
+
+	// DRAW
+	useWidth = chUseWidth->isChecked();
+	float wTune = 1.0f;
+	if(useWidth)
+	{
+		float val = slWidth->value();
+		wTune = val/25.0f;
+	}
+
+	bool reduce = chUseReduce->isChecked();
+	float reduceFactor = 1.0;
+	if(reduce)
+	{
+		reduceFactor = slReduce->value()/1000.0f;
+	}
+
+	srand(0);
+
+	RiBegin("launch:prman");
+	//RiBegin("launch:prman? -t -ctrl $ctrlin $ctrlout -dspy $dspyin $dspyout -xcpt $xcptin");
+
+	RiFrameBegin(currentFrame);
+
+	RiIdentity();
+	RiPixelSamples(3,3);
+	RiPixelFilter(RiTriangleFilter,2,2);
+
+	RiFormat(F.width,F.height,1.0);
+
+	RiDisplay("STROKES",RI_FRAMEBUFFER,RI_RGBA,RI_NULL);
+
+	RiClipping(0.001,1001);
+
+	RiProjection(RI_ORTHOGRAPHIC,RI_NULL);
+
+	RiScreenWindow(0,F.width,F.height,0);
+
+
+	RiWorldBegin();
+	RiSurface(RI_CONSTANT,RI_NULL);
+
+	RtFloat background[] = { F.background[0]/255.0f, F.background[1]/255.0f, F.background[2]/255.0f };
+	RiColor(background);
+
+	//RiImager("background","color",background,RI_NULL);
+	//RiImager("background","color",background,RI_NULL);
+	//RiImager(RI_CONSTANT,RI_NULL);
+
+	RiAttributeBegin();
+		RiCoordSysTransform(RI_CAMERA);
+		RtFloat P[] = 
+		{
+			-1, -1, 1000,
+			-1, F.height+1, 1000,
+			F.width+1, -1, 1000,
+			F.width+1, F.height+1, 1000
+		};
+		RiPatch(RI_BILINEAR,"P",P,RI_NULL);
+	RiAttributeEnd();
+
+	for(int i=0;i<F.segments.count();i++)
+	{
+		QList<segment> &block = *(F.segments[i]);
+		foreach(segment s, block)
+		{
+			if(reduce)
+			{
+				long rnd = rand();
+				float r = float(rnd)/RAND_MAX;
+				if(r > reduceFactor) continue;
+			}
+			//float w = 1.0;
+			//if(useWidth) w = wTune*(s.width[0]+s.width[1])/2;
+
+			riDrawSegment(s, useWidth ? wTune : 1.0);
+
+		}
+	}
+
+	RiWorldEnd();
+
+	RiFrameEnd();
+
+	RiEnd();
+}
+
+void riDrawSegment(segment& s, float w)
+{
+	RiColor(s.color);
+
+	float d[] = { s.end[0]-s.start[0], s.end[1]-s.start[1] };
+
+	double l = sqrt(d[0]*d[0]+d[1]*d[1]);
+
+	d[0] /= l; d[1] /= l;
+
+	RtFloat W[] = { s.width[0]*w, s.width[1]*w };
+	RtFloat P[] = {	s.start[0]-d[0]*W[0], s.start[1]-d[1]*W[0], s.z, 
+							s.end[0]+d[0]*W[1], s.end[1]+d[1]*W[1], s.z };
+
+	RtInt N[] = { 2 };
+
+
+	RiCurves(RI_LINEAR,1,N,RI_NONPERIODIC,RI_P,P,RI_WIDTH,W,RI_NULL);
 }
 /*void XTune::showPreview()
 {
