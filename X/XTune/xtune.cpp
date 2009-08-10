@@ -476,10 +476,6 @@ void XTune::renderFrame()
 	srand(0);
 
 	RiBegin("launch:prman");
-	//RiBegin("launch:prman? -t -ctrl $ctrlin $ctrlout -dspy $dspyin $dspyout -xcpt $xcptin");
-
-
-	//RiOption("searchpath","string procedural","//C/Pixar/RenderManProServer-15.0b2/etc:@:.",RI_NULL);
 
 	RiFrameBegin(currentFrame);
 
