@@ -13,6 +13,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <iostream>
+using namespace std;
+
 // RI
 
 #include <ri.h>
