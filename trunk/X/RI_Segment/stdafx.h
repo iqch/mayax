@@ -6,6 +6,8 @@
 #define DLLEXPORT
 #endif
 
+#define _USE_MATH_DEFINES
+
 // CRT
 #include <math.h>
 #include <stdlib.h>
@@ -14,3 +16,4 @@
 // RI
 
 #include <ri.h>
+#include <rx.h>
