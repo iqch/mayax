@@ -32,6 +32,8 @@ private slots:
 	//void showPreview();
 	void renderFrame();
 
+	void getShader();
+
 private:
 	QStatusBar*	statusBar;
 
@@ -47,7 +49,11 @@ private:
 	QSlider*		slReduce;
 	QCheckBox*	chUseReduce;
 
-	QFileDialog* dlgOpen;
+	QFileDialog*	dlgOpen;
+
+	QFileDialog*	dlgShader;
+
+	QLabel*			lbShader;
 
 
 	// INTERNAL FIELDS

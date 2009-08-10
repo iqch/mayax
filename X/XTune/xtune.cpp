@@ -55,7 +55,7 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 		tb->addWidget(slWidth);
 
 		QPushButton* btnPreview = new QPushButton("Render...");
-		btnPreview->setFlat(true);
+		//btnPreview->setFlat(true);
 		connect(btnPreview,SIGNAL(clicked(bool)),SLOT(renderFrame()));
 		tb->addWidget(btnPreview);
 	}
@@ -78,6 +78,21 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 		//slReduce->setTracking(false);
 		connect(slReduce,SIGNAL(valueChanged(int)),SLOT(reduceChanged()));
 		tb->addWidget(slReduce);
+	}
+	
+	// TOOL BAR SHADER
+	{
+		QToolBar* tb = new QToolBar("Shader");
+
+		addToolBar(Qt::ToolBarArea::BottomToolBarArea,tb);
+
+		QPushButton* btnChoose = new QPushButton("Browse...");
+		//btnChoose->setFlat(true);
+		connect(btnChoose,SIGNAL(clicked(bool)),SLOT(getShader()));
+		tb->addWidget(btnChoose);
+
+		lbShader = new QLabel("constant");
+		tb->addWidget(lbShader);
 	}
 
 	// MAIN SPLITTER
@@ -118,6 +133,7 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 
 	// SERVICES
 	dlgOpen = new QFileDialog(this,"Open Bin","/","Binary (*.bin)");
+	dlgShader = new QFileDialog(this,"Open SLO","/","SLO Shader (*.slo)");
 }
 
 XTune::~XTune() {}
@@ -462,6 +478,9 @@ void XTune::renderFrame()
 	RiBegin("launch:prman");
 	//RiBegin("launch:prman? -t -ctrl $ctrlin $ctrlout -dspy $dspyin $dspyout -xcpt $xcptin");
 
+
+	//RiOption("searchpath","string procedural","//C/Pixar/RenderManProServer-15.0b2/etc:@:.",RI_NULL);
+
 	RiFrameBegin(currentFrame);
 
 	RiIdentity();
@@ -480,6 +499,7 @@ void XTune::renderFrame()
 
 
 	RiWorldBegin();
+
 	RiSurface(RI_CONSTANT,RI_NULL);
 
 	RtFloat background[] = { F.background[0]/255.0f, F.background[1]/255.0f, F.background[2]/255.0f };
@@ -500,6 +520,23 @@ void XTune::renderFrame()
 		};
 		RiPatch(RI_BILINEAR,"P",P,RI_NULL);
 	RiAttributeEnd();
+
+	QString shader = lbShader->text();
+
+	shader.replace("\\","/");
+
+	if(shader.indexOf(":") != -1)
+	{
+		shader.replace(":","");
+		shader = "//" + shader;
+	}
+
+	QByteArray ba = shader.toAscii();
+
+	const char* shn = ba.constData();
+
+	RiSurface(shn,RI_NULL);
+
 
 	for(int i=0;i<F.segments.count();i++)
 	{
@@ -529,23 +566,78 @@ void XTune::renderFrame()
 
 void riDrawSegment(segment& s, float w)
 {
+	RiAttributeBegin();
 	RiColor(s.color);
 
-	float d[] = { s.end[0]-s.start[0], s.end[1]-s.start[1] };
+	RiTransformBegin();
 
+	bool turned = (s.width[1] > s.width[0]);
+
+	float d[] = { s.end[0]-s.start[0], s.end[1]-s.start[1] };
 	double l = sqrt(d[0]*d[0]+d[1]*d[1]);
 
-	d[0] /= l; d[1] /= l;
+	RtFloat stroke[] = {1.0,1.0};
 
-	RtFloat W[] = { s.width[0]*w, s.width[1]*w };
-	RtFloat P[] = {	s.start[0]-d[0]*W[0], s.start[1]-d[1]*W[0], s.z, 
-							s.end[0]+d[0]*W[1], s.end[1]+d[1]*W[1], s.z };
+	if(!turned)
+	{
+		RiTranslate(s.start[0],s.start[1],s.z);
+		float angle = 180.0f/M_PI*atan2(s.end[1]-s.start[1],s.end[0]-s.start[0]);
+		RiRotate(angle,0,0,1);
+		RiScale(s.width[0]*w,s.width[0]*w,s.width[0]*w);
 
-	RtInt N[] = { 2 };
+		stroke[0] = l/s.width[0]/w;
+		stroke[1] = s.width[1]/s.width[0];
 
+		RiAttribute("user","float[2] stroke",stroke,RI_NULL);
+	}
+	else
+	{
+		RiTranslate(s.end[0],s.end[1],s.z);\
+		float angle = 180.0f/M_PI*atan2(s.start[1]-s.end[1],s.start[0]-s.end[0]);
+		RiRotate(angle,0,0,1);
+		RiScale(s.width[1]*w,s.width[1]*w,s.width[1]*w);
 
-	RiCurves(RI_LINEAR,1,N,RI_NONPERIODIC,RI_P,P,RI_WIDTH,W,RI_NULL);
+		stroke[0] = l/s.width[1]/w;
+		stroke[1] = s.width[0]/s.width[1];
+
+		RiAttribute("user","float[2] stroke",stroke,RI_NULL);
+	}
+
+	RtString args[] = { "DPROC_Segment", "" } ;
+	RtFloat bbox[] = {-1.05, stroke[0]+stroke[1]+0.05, -1.05, 1.05, -0.01, 0.01};
+
+	RiProcedural ((RtPointer)args, bbox, RiProcDynamicLoad, NULL);
+
+	//float d[] = { s.end[0]-s.start[0], s.end[1]-s.start[1] };
+	//double l = sqrt(d[0]*d[0]+d[1]*d[1]);
+
+	//d[0] /= l; d[1] /= l;
+
+	//RtFloat W[] = { s.width[0]*w, s.width[1]*w };
+	//RtFloat P[] = {	s.start[0]-d[0]*W[0], s.start[1]-d[1]*W[0], s.z, 
+	//						s.end[0]+d[0]*W[1], s.end[1]+d[1]*W[1], s.z };
+	//RtInt N[] = { 2 };
+	//RiCurves(RI_LINEAR,1,N,RI_NONPERIODIC,RI_P,P,RI_WIDTH,W,RI_NULL);
+
+	RiTransformEnd();
+	RiAttributeEnd();
 }
+
+void XTune::getShader()
+{
+	if(!dlgShader->exec()) return;
+
+	QStringList files = dlgShader->selectedFiles();
+
+	QString fileName = files[0];
+
+	QFileInfo fi(fileName);
+
+	QString path = fi.absolutePath() + "/" + fi.completeBaseName();
+
+	lbShader->setText(path);
+};
+
 /*void XTune::showPreview()
 {
 	if(!valid) return;

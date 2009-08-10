@@ -2,6 +2,8 @@
 
 // CRT
 
+#define _USE_MATH_DEFINES
+
 #include <math.h>
 
 // QT
@@ -45,6 +47,8 @@
 #include <QtGui/QStatusBar>
 
 #include <QtGui/QFileDialog>
+
+#include <QtGui/QLabel>
 
 // CRT
 
