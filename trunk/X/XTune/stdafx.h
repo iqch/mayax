@@ -49,6 +49,9 @@
 #include <QtGui/QFileDialog>
 
 #include <QtGui/QLabel>
+#include <QtGui/QLineEdit>
+
+#include <QtGui/QDoubleValidator>
 
 // CRT
 
