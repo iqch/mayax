@@ -78,6 +78,23 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 		//slReduce->setTracking(false);
 		connect(slReduce,SIGNAL(valueChanged(int)),SLOT(reduceChanged()));
 		tb->addWidget(slReduce);
+
+		tb->addWidget(new QLabel("Resize"));
+
+		slResize = new QSlider(Qt::Horizontal);
+
+		slResize->setMinimum(-4);
+		slResize->setMaximum(4);
+		slResize->setValue(0);
+
+		tb->addWidget(slResize);
+
+		edResFactor = new QLineEdit;
+		QDoubleValidator* dv = new QDoubleValidator(0.00001,50.0,6,edResFactor);
+		edResFactor->setValidator(dv);
+		edResFactor->setText("2.00");
+
+		tb->addWidget(edResFactor);
 	}
 	
 	// TOOL BAR SHADER
@@ -483,7 +500,29 @@ void XTune::renderFrame()
 	RiPixelSamples(3,3);
 	RiPixelFilter(RiTriangleFilter,2,2);
 
-	RiFormat(F.width,F.height,1.0);
+	int rf = slResize->value();
+	double scale = 1.0;
+	if(rf != 0)
+	{
+		double resFactor = 2.0;
+		if(edResFactor->text() != "")
+		{
+			resFactor = edResFactor->text().toDouble();
+		}
+
+		if(rf>0)
+		{
+			for(int i=0;i<slResize->value();i++) scale *= resFactor;
+		}
+		else
+		{
+			for(int i=slResize->value();i<0;i++) scale /= resFactor;
+		}
+	}
+
+
+
+	RiFormat(F.width*scale,F.height*scale,1.0);
 
 	RiDisplay("STROKES",RI_FRAMEBUFFER,RI_RGBA,RI_NULL);
 

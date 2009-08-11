@@ -55,6 +55,10 @@ private:
 
 	QLabel*			lbShader;
 
+	QSlider*		slResize;
+
+	QLineEdit*		edResFactor;
+
 
 	// INTERNAL FIELDS
 
