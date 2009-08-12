@@ -40,6 +40,8 @@
 
 #include <QtGui/QHBoxLayout>
 #include <QtGui/QVBoxLayout>
+#include <QtGui/QGridLayout>
+#include <QtGui/QSpacerItem>
 
 #include <QtGui/QPen>
 #include <QtGui/QBrush>
@@ -61,6 +63,7 @@
 
 #include <ri.h>
 #include <ric.h>
+#include <slo.h>
 
 // DATA STRUCTS
 typedef struct _segment {

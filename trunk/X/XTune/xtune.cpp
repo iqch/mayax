@@ -50,9 +50,19 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 		slWidth->setMinimum(0);
 		slWidth->setValue(25);
 		slWidth->setEnabled(false);
-		//slWidth->setTracking(false);
+		slWidth->setTracking(false);
 		connect(slWidth,SIGNAL(valueChanged(int)),SLOT(widthTuneChanged()));
 		tb->addWidget(slWidth);
+	}
+
+	{
+		QToolBar* tb = new QToolBar("Render");
+		addToolBar(Qt::ToolBarArea::TopToolBarArea,tb);
+
+		cbUseBackground = new QCheckBox("background");
+		cbUseBackground->setChecked(true);
+
+		tb->addWidget(cbUseBackground);
 
 		QPushButton* btnPreview = new QPushButton("Render...");
 		//btnPreview->setFlat(true);
@@ -75,7 +85,7 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 		slReduce->setMinimum(0);
 		slReduce->setValue(1000);
 		slReduce->setEnabled(false);
-		//slReduce->setTracking(false);
+		slReduce->setTracking(false);
 		connect(slReduce,SIGNAL(valueChanged(int)),SLOT(reduceChanged()));
 		tb->addWidget(slReduce);
 
@@ -99,17 +109,19 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 	
 	// TOOL BAR SHADER
 	{
-		QToolBar* tb = new QToolBar("Shader");
+		tbShader = new QToolBar("Shader");
 
-		addToolBar(Qt::ToolBarArea::BottomToolBarArea,tb);
+		shaderPath = "constant";
+
+		addToolBar(Qt::ToolBarArea::BottomToolBarArea,tbShader);
 
 		QPushButton* btnChoose = new QPushButton("Browse...");
 		//btnChoose->setFlat(true);
 		connect(btnChoose,SIGNAL(clicked(bool)),SLOT(getShader()));
-		tb->addWidget(btnChoose);
+		tbShader->addWidget(btnChoose);
 
 		lbShader = new QLabel("constant");
-		tb->addWidget(lbShader);
+		tbShader->addWidget(lbShader);
 	}
 
 	// MAIN SPLITTER
@@ -141,6 +153,20 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 	connect(frameList,SIGNAL(currentRowChanged(int)),SLOT(frameSelected(int)));
 
 	//sp->addWidget(canvas);
+
+	wdShaderPanel = new QWidget;
+	glShaderGrid = new QGridLayout;
+
+	lbShaderName = new QLabel("constant");
+	glShaderGrid->addWidget(lbShaderName,0,0,1,3);
+
+	glSpacer = new QSpacerItem(1,800,QSizePolicy::Minimum,QSizePolicy::Expanding);
+	glShaderGrid->addItem(glSpacer, 1, 0, 1, 3);
+	wdShaderPanel->setLayout(glShaderGrid);
+
+	sp->addWidget(wdShaderPanel);
+
+	wdShaderPanel->hide();
 	
 	setCentralWidget(sp);
 
@@ -535,43 +561,31 @@ void XTune::renderFrame()
 
 	RiWorldBegin();
 
-	RiSurface(RI_CONSTANT,RI_NULL);
-
-	RtFloat background[] = { F.background[0]/255.0f, F.background[1]/255.0f, F.background[2]/255.0f };
-	RiColor(background);
-
-	//RiImager("background","color",background,RI_NULL);
-	//RiImager("background","color",background,RI_NULL);
-	//RiImager(RI_CONSTANT,RI_NULL);
-
-	RiAttributeBegin();
-		RiCoordSysTransform(RI_CAMERA);
-		RtFloat P[] = 
-		{
-			-1, -1, 1000,
-			-1, F.height+1, 1000,
-			F.width+1, -1, 1000,
-			F.width+1, F.height+1, 1000
-		};
-		RiPatch(RI_BILINEAR,"P",P,RI_NULL);
-	RiAttributeEnd();
-
-	QString shader = lbShader->text();
-
-	shader.replace("\\","/");
-
-	if(shader.indexOf(":") != -1)
+	if(cbUseBackground->isChecked())
 	{
-		shader.replace(":","");
-		shader = "//" + shader;
+		RiSurface(RI_CONSTANT,RI_NULL);
+
+		RtFloat background[] = { F.background[0]/255.0f, F.background[1]/255.0f, F.background[2]/255.0f };
+		RiColor(background);
+
+		//RiImager("background","color",background,RI_NULL);
+		//RiImager("background","color",background,RI_NULL);
+		//RiImager(RI_CONSTANT,RI_NULL);
+
+		RiAttributeBegin();
+			RiCoordSysTransform(RI_CAMERA);
+			RtFloat P[] = 
+			{
+				-1, -1, 1000,
+				-1, F.height+1, 1000,
+				F.width+1, -1, 1000,
+				F.width+1, F.height+1, 1000
+			};
+			RiPatch(RI_BILINEAR,"P",P,RI_NULL);
+		RiAttributeEnd();
 	}
 
-	QByteArray ba = shader.toAscii();
-
-	const char* shn = ba.constData();
-
-	RiSurface(shn,RI_NULL);
-
+	assignShader();
 
 	for(int i=0;i<F.segments.count();i++)
 	{
@@ -658,6 +672,26 @@ void riDrawSegment(segment& s, float w)
 	RiAttributeEnd();
 }
 
+void XTune::assignShader()
+{
+	QString shader = shaderPath; // lbShader->text();
+
+	shader.replace("\\","/");
+
+	if(shader.indexOf(":") != -1)
+	{
+		shader.replace(":","");
+		shader = "//" + shader;
+	}
+
+	QByteArray ba = shader.toAscii();
+
+	const char* shn = ba.constData();
+
+	RiSurface(shn,RI_NULL);
+
+};
+
 void XTune::getShader()
 {
 	if(!dlgShader->exec()) return;
@@ -667,10 +701,98 @@ void XTune::getShader()
 	QString fileName = files[0];
 
 	QFileInfo fi(fileName);
-
 	QString path = fi.absolutePath() + "/" + fi.completeBaseName();
 
-	lbShader->setText(path);
+	QByteArray ba = path.toAscii();
+	const char* shName = ba.constData();
+
+	int shader = Slo_SetShader(shName);
+	if(shader != 0) return;
+
+	SLO_TYPE type = Slo_GetType();
+
+	if(type != SLO_TYPE_SURFACE) return;
+
+	const char* clause = Slo_GetName();
+	lbShader->setText(clause);
+
+	shaderPath = path;
+
+	// CLEAR LAYOUT
+
+	wdShaderPanel->setEnabled(true);
+	wdShaderPanel->show();
+
+	{
+		glShaderGrid->removeItem(glSpacer);
+	}
+
+	foreach(QWidget* n, shaderNunnies)
+	{
+		glShaderGrid->removeWidget(n);
+		//glShaderGrid->removeChild(n);
+		delete n;
+	}
+
+	shaderNunnies.clear();
+
+	// ...FILL LAYOUT
+	lbShaderName->setText(clause);
+	lbShaderName->setAlignment(Qt::AlignHCenter);
+
+	int row = 1;
+
+	int nargs = Slo_GetNArgs();
+
+	for(int i=1;i<=nargs;i++)
+	{
+		SLO_VISSYMDEF* arg = Slo_GetArgById(i);
+		if(arg == NULL) continue;
+		//if(arg->svd_detail != SLO_DETAIL_UNIFORM) continue;
+		if(arg->svd_storage != SLO_STOR_PARAMETER) continue;
+		
+		if(arg->svd_type == SLO_TYPE_STRING)
+		{
+			QLabel* lbProxy = new QLabel();
+			glShaderGrid->addWidget(lbProxy,row,0,1,1);
+			shaderNunnies.append(lbProxy);
+
+			QLabel* lbName = new QLabel(arg->svd_name);
+			glShaderGrid->addWidget(lbName,row,1,1,1);
+			shaderNunnies.append(lbName);
+
+			QLineEdit* edString = new QLineEdit(arg->svd_default.stringval);
+			glShaderGrid->addWidget(edString,row,2,1,1);
+			shaderNunnies.append(edString);
+
+			row++;
+		}
+		
+		//&& (arg->svd_type != SLO_TYPE_COLOR)
+		
+		if(arg->svd_type == SLO_TYPE_SCALAR)
+		{
+			QCheckBox* cbEnable = new QCheckBox(this);
+			glShaderGrid->addWidget(cbEnable,row,0,1,1);
+			shaderNunnies.append(cbEnable);
+
+			QLabel* lbName = new QLabel(arg->svd_name,this);
+			glShaderGrid->addWidget(lbName,row,1,1,1);
+			shaderNunnies.append(lbName);
+
+			QLineEdit* edString = new QLineEdit(QString("%1").arg(*(arg->svd_default.scalarval)),this);
+			QDoubleValidator* dv = new QDoubleValidator(-100000000000,10000000000,8,this);
+			edString->setValidator(dv);
+			glShaderGrid->addWidget(edString,row,2,1,1);
+			shaderNunnies.append(edString);
+
+			row++;		};
+	}
+
+	// ADD SPACING
+	glShaderGrid->addItem(glSpacer, row, 0, 1, 3);
+
+	Slo_EndShader();
 };
 
 /*void XTune::showPreview()

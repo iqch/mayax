@@ -62,7 +62,7 @@ void XGLPreview::initializeGL()
 	//glEnable(GL_CULL_FACE);
 }
 
-void XGLPreview::resizeGL(int width, int height)
+/*void XGLPreview::resizeGL(int width, int height)
 {
 	int side = qMin(width,height);
 
@@ -89,11 +89,36 @@ void XGLPreview::resizeGL(int width, int height)
 
 	glOrtho(0, eW, eH, 0, -1000.0, 1000.0);
 	glMatrixMode(GL_MODELVIEW);
-};
+};*/
 
 void XGLPreview::paintGL()
 {
-	//if(list == -1) return;
+	int w = width(); int h = height();
+	int side = qMin(w,h);
+
+	glViewport((w-side)/2, -(h-side)/2, w, h);
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+	float aspect = w / float(h);
+	float frameAspect = fWidth / float(fHeight);
+
+	int eW, eH;
+
+	if(aspect >= frameAspect)
+	{
+		eW = fHeight*aspect;
+		eH = fHeight;
+	}
+	else
+	{
+		eW = fWidth;
+		eH = fWidth/aspect;
+	}
+
+	glOrtho(0, eW, eH, 0, -1000.0, 1000.0);
+	glMatrixMode(GL_MODELVIEW);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
