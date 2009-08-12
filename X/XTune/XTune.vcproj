@@ -480,6 +480,13 @@
 				RelativePath=".\GeneratedFiles\Release\moc_xglpreview.cpp"
 				>
 				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Debug|x64"
 					ExcludedFromBuild="true"
 					>

@@ -14,7 +14,7 @@ public:
 	//bool endList();
 
 	virtual void initializeGL();
-	virtual void resizeGL(int width, int height);
+	//virtual void resizeGL(int width, int height);
 	virtual void paintGL();
 
 	void setClearColor(QColor C);

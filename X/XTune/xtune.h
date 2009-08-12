@@ -51,13 +51,22 @@ private:
 
 	QFileDialog*	dlgOpen;
 
+	QToolBar*		tbShader;
 	QFileDialog*	dlgShader;
+	QString			shaderPath;
 
 	QLabel*			lbShader;
+
+	QWidget*		wdShaderPanel;
+	QGridLayout*	glShaderGrid;
+	QLabel*			lbShaderName;
+	QSpacerItem* glSpacer;
 
 	QSlider*		slResize;
 
 	QLineEdit*		edResFactor;
+
+	QCheckBox*	cbUseBackground;
 
 
 	// INTERNAL FIELDS
@@ -72,6 +81,13 @@ private:
 
 	int currentFrame;
 	bool useWidth;
+
+	// HELPERS
+
+	void assignShader();
+
+	QHash<QString,QWidget*> shaderGuts;
+	QList<QWidget*> shaderNunnies;
 };
 
 #endif // XTUNE_H
