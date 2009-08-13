@@ -8,19 +8,11 @@ XShaderParam* XShaderParamColor::getParameter(SLO_VISSYMDEF* default)
 	return res;
 };
 
-
 XShaderParamColor::XShaderParamColor() {}
 
 void XShaderParamColor::setup(SLO_VISSYMDEF* arg)
 { 
-
-	QHBoxLayout* hl = new QHBoxLayout;
-
-	cbEnabled = new QCheckBox;
-	hl->addWidget(cbEnabled);
-
-	lbName = new QLabel(arg->svd_name,this);
-	hl->addWidget(lbName);
+	XShaderParam::setup(arg);
 
 	cbbColor = new QtColorComboBox;
 
@@ -32,7 +24,24 @@ void XShaderParamColor::setup(SLO_VISSYMDEF* arg)
 	cbbColor->setColorDialogEnabled(true);
 	hl->addWidget(cbbColor);
 
-	setLayout(hl);
+	value = colorValue;
 }
 
 XShaderParamColor::~XShaderParamColor() {}
+
+QString XShaderParamColor::clause()
+{
+	QString res;
+
+	if(cbEnabled->isChecked())
+	{
+		res = "color " + lbName->text();
+
+		QColor c = cbbColor->currentColor();
+		colorValue[0] = c.red() / 255.0;
+		colorValue[1] = c.green() / 255.0;
+		colorValue[2] = c.blue() / 255.0;
+	}
+
+	return res;
+};

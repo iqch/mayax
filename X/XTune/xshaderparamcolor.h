@@ -11,10 +11,16 @@ public:
 
 	virtual XShaderParam* getParameter(SLO_VISSYMDEF* default);
 
+	virtual QString clause();
+
+protected:
+
+	void setup(SLO_VISSYMDEF* arg);
+
 private:
 
-	void setup(SLO_VISSYMDEF* def);
 	QtColorComboBox* cbbColor;
+	float colorValue[3];
 
 };
 
