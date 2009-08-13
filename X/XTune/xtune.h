@@ -57,9 +57,9 @@ private:
 	QFileDialog*	dlgShader;
 	QString			shaderPath;
 
-	QLabel*			lbShader;
+	//QLabel*			lbShader;
 
-	QWidget*		wdShaderPanel;
+	//QWidget*		wdShaderPanel;
 	QVBoxLayout*	vlShader;
 	QLabel*			lbShaderName;
 	QSpacerItem* glSpacer;

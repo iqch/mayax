@@ -61,19 +61,20 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 		tb->addWidget(slWidth);
 	}
 
+	// TOOL BAR RENDER
 	{
-		QToolBar* tb = new QToolBar("Render");
-		addToolBar(Qt::ToolBarArea::TopToolBarArea,tb);
+		//QToolBar* tb = new QToolBar("Render");
+		//addToolBar(Qt::ToolBarArea::TopToolBarArea,tb);
 
-		cbUseBackground = new QCheckBox("background");
-		cbUseBackground->setChecked(true);
+		//cbUseBackground = new QCheckBox("background");
+		//cbUseBackground->setChecked(true);
 
-		tb->addWidget(cbUseBackground);
+		//tb->addWidget(cbUseBackground);
 
-		QPushButton* btnPreview = new QPushButton("Render...");
-		//btnPreview->setFlat(true);
-		connect(btnPreview,SIGNAL(clicked(bool)),SLOT(renderFrame()));
-		tb->addWidget(btnPreview);
+		//QPushButton* btnPreview = new QPushButton("Render...");
+		////btnPreview->setFlat(true);
+		//connect(btnPreview,SIGNAL(clicked(bool)),SLOT(renderFrame()));
+		//tb->addWidget(btnPreview);
 	}
 
 	// TOOLBAR REDUCE
@@ -94,40 +95,23 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 		slReduce->setTracking(false);
 		connect(slReduce,SIGNAL(valueChanged(int)),SLOT(reduceChanged()));
 		tb->addWidget(slReduce);
-
-		tb->addWidget(new QLabel("Resize"));
-
-		slResize = new QSlider(Qt::Horizontal);
-
-		slResize->setMinimum(-4);
-		slResize->setMaximum(4);
-		slResize->setValue(0);
-
-		tb->addWidget(slResize);
-
-		edResFactor = new QLineEdit;
-		QDoubleValidator* dv = new QDoubleValidator(0.00001,50.0,6,edResFactor);
-		edResFactor->setValidator(dv);
-		edResFactor->setText("2.00");
-
-		tb->addWidget(edResFactor);
 	}
 	
 	// TOOL BAR SHADER
 	{
-		tbShader = new QToolBar("Shader");
+		//tbShader = new QToolBar("Shader");
 
-		shaderPath = "constant";
+		//shaderPath = "constant";
 
-		addToolBar(Qt::ToolBarArea::BottomToolBarArea,tbShader);
+		//addToolBar(Qt::ToolBarArea::BottomToolBarArea,tbShader);
 
-		QPushButton* btnChoose = new QPushButton("Browse...");
-		//btnChoose->setFlat(true);
-		connect(btnChoose,SIGNAL(clicked(bool)),SLOT(getShader()));
-		tbShader->addWidget(btnChoose);
+		//QPushButton* btnChoose = new QPushButton("Browse...");
+		////btnChoose->setFlat(true);
+		//connect(btnChoose,SIGNAL(clicked(bool)),SLOT(getShader()));
+		//tbShader->addWidget(btnChoose);
 
-		lbShader = new QLabel("constant");
-		tbShader->addWidget(lbShader);
+		//lbShader = new QLabel("constant");
+		//tbShader->addWidget(lbShader);
 	}
 
 	// MAIN SPLITTER
@@ -139,49 +123,105 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 
 	sp->addWidget(frameList);
 
-	//scene = new XScene;
-	//canvas = new XCanvas;
-	//canvas->setScene(scene);
-
-	QTabWidget* tab = new QTabWidget;
-
-	//tab->addTab(canvas,QIcon(),"Scene");
-
 	preview = new XGLPreview;
-
-	tab->addTab(preview, QIcon(), "Preview");
-
-	//canvas->setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
-
-	sp->addWidget(tab);
-
+	sp->addWidget(preview);
 
 	connect(frameList,SIGNAL(currentRowChanged(int)),SLOT(frameSelected(int)));
 
-	//sp->addWidget(canvas);
-
-	wdShaderPanel = new QWidget;
-	vlShader = new QVBoxLayout;
-	vlShader->setMargin(3);
-	vlShader->setSpacing(2);
-
-	lbShaderName = new QLabel("constant");
-	vlShader->addWidget(lbShaderName);
-
-	glSpacer = new QSpacerItem(1,800,QSizePolicy::Minimum,QSizePolicy::Expanding);
-	vlShader->addItem(glSpacer);
-	wdShaderPanel->setLayout(vlShader);
-
 	QToolBox* tbxRender = new QToolBox;
 
-	tbxRender->addItem(wdShaderPanel,"Shader");
-	
-	
+	// RENDER SECTION
+	{
+		QWidget*wdRenderPanel = new QWidget;
+
+		QVBoxLayout* vl = new QVBoxLayout;
+		vl->setMargin(2);
+		vl->setSpacing(2);
+
+		{
+			QHBoxLayout* hl = new QHBoxLayout;
+			hl->setMargin(0);
+			hl->setSpacing(2);
+
+			cbUseBackground = new QCheckBox("background");
+			cbUseBackground->setChecked(true);
+
+			hl->addWidget(cbUseBackground);
+
+			QPushButton* btnPreview = new QPushButton("Render...");
+			connect(btnPreview,SIGNAL(clicked(bool)),SLOT(renderFrame()));
+
+			hl->addWidget(btnPreview);
+
+			vl->addLayout(hl);
+		}
+
+		{
+			QHBoxLayout* hl = new QHBoxLayout;
+			hl->setMargin(0);
+			hl->setSpacing(2);
+
+			hl->addWidget(new QLabel("Resize"));
+
+			slResize = new QSlider(Qt::Horizontal);
+
+			slResize->setMinimum(-4);
+			slResize->setMaximum(4);
+			slResize->setValue(0);
+
+			hl->addWidget(slResize);
+
+			edResFactor = new QLineEdit;
+			QDoubleValidator* dv = new QDoubleValidator(0.00001,50.0,6,edResFactor);
+			edResFactor->setValidator(dv);
+			edResFactor->setText("2.00");
+
+			hl->addWidget(edResFactor);
+
+			vl->addLayout(hl);
+		}
+
+		wdRenderPanel->setLayout(vl);
+
+		wdRenderPanel->setFixedHeight(100);
+
+		tbxRender->addItem(wdRenderPanel,"Render");
+	}
+
+	// SHADER SECTION
+	{
+		QWidget*wdShaderPanel = new QWidget;
+
+		QHBoxLayout* hl = new QHBoxLayout;
+		hl->setMargin(0);
+		hl->setSpacing(2);
+
+		lbShaderName = new QLabel("constant");
+		hl->addWidget(lbShaderName);
+
+		shaderPath = "constant";
+
+		QPushButton* btnChoose = new QPushButton("Browse...");
+		//btnChoose->setFlat(true);
+		connect(btnChoose,SIGNAL(clicked(bool)),SLOT(getShader()));
+		hl->addWidget(btnChoose);
+
+		vlShader = new QVBoxLayout;
+		vlShader->setMargin(3);
+		vlShader->setSpacing(2);
+
+		vlShader->addLayout(hl);
+
+		glSpacer = new QSpacerItem(1,800,QSizePolicy::Minimum,QSizePolicy::Expanding);
+		vlShader->addItem(glSpacer);
+		wdShaderPanel->setLayout(vlShader);
+
+		tbxRender->addItem(wdShaderPanel,"Shader");
+	}
+
 
 	sp->addWidget(tbxRender);
 
-	//wdShaderPanel->hide();
-	
 	setCentralWidget(sp);
 
 	// STATUSBAR
@@ -736,15 +776,11 @@ void XTune::getShader()
 	if(type != SLO_TYPE_SURFACE) return;
 
 	const char* clause = Slo_GetName();
-	lbShader->setText(clause);
+	//lbShader->setText(clause);
 
 	shaderPath = path;
 
 	// CLEAR LAYOUT
-
-	wdShaderPanel->setEnabled(true);
-	wdShaderPanel->show();
-
 	{
 		vlShader->removeItem(glSpacer);
 	}
@@ -860,72 +896,5 @@ void XTune::getShader()
 	Slo_EndShader();
 };
 
-/*void XTune::showPreview()
-{
-	if(!valid) return;
-	if(currentFrame == -1) return;
-	if(currentFrame >= frames.count()) return;
 
-	frame F = frames[currentFrame];
-
-	XGLPreview* glw = new XGLPreview;
-	glw->setGeometry(5,45,F.width,F.height);
-	glw->setFixedSize(F.width,F.height);
-
-	// DRAW
-	useWidth = chUseWidth->isChecked();
-	float wTune = 1.0f;
-	if(useWidth)
-	{
-		float val = slWidth->value();
-		wTune = val/25.0f;
-	}
-
-	bool reduce = chUseReduce->isChecked();
-	float reduceFactor = 1.0;
-	if(reduce)
-	{
-		reduceFactor = slReduce->value()/1000.0f;
-	}
-
-	srand(0);
-
-	//glw->startList();
-
-	// DRAW SEGMENTS
-	for(int i=0;i<F.segments.count();i++)
-	{
-		QList<segment> &block = *(F.segments[i]);
-		foreach(segment s, block)
-		{
-			if(reduce)
-			{
-				long rnd = rand();
-				float r = float(rnd)/RAND_MAX;
-				if(r > reduceFactor) continue;
-			}
-			float w = 1.0;
-			if(useWidth) w = wTune*(s.width[0]+s.width[1])/2;
-
-			segment _S;
-
-			_S.color[0] = s.color[0]; _S.color[1] = s.color[1];
-			_S.color[2] = s.color[2]; _S.color[3] = s.color[3];
-
-			_S.start[0] = s.start[0]; _S.start[1] = s.start[1];
-			_S.end[0] = s.end[0]; _S.end[1] = s.end[1];
-			//_S.z = s.z; 
-
-
-			_S.width[0] = w; _S.width[1] = w;
-
-			glw->segments.append(_S);
-
-		}
-	}
-
-	//glw->endList();
-	glw->show();
-
-};*/
 
