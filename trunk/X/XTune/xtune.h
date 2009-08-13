@@ -6,6 +6,8 @@
 #include "xscene.h"
 #include "xglpreview.h"
 
+#include "xshaderparam.h"
+
 class XTune : public QMainWindow
 {
 	Q_OBJECT
@@ -86,8 +88,12 @@ private:
 
 	void assignShader();
 
-	QHash<QString,QWidget*> shaderGuts;
-	QList<QWidget*> shaderNunnies;
+	//QHash<QString,QWidget*> shaderGuts;
+	//QList<QWidget*> shaderNunnies;
+
+	QList<XShaderParam*> shaderGuts;
+
+	static QHash<SLO_TYPE,XShaderParam*> paramCreators;
 };
 
 #endif // XTUNE_H

@@ -55,6 +55,9 @@
 
 #include <QtGui/QDoubleValidator>
 
+#include <QtSolutions/QtColorTriangle>
+#include <QtSolutions/QtColorComboBox>
+
 // CRT
 
 #include <stdlib.h>
@@ -105,6 +108,8 @@ QDataStream& operator<<(QDataStream&, const  segment&);
 QDataStream& operator>>(QDataStream&, segment&);
 
 #define clamp(x,min,max) (x <= min ? min : (x >= max ? max : x))
+
+#include "xshaderparam.h"
 
 
 
