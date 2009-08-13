@@ -58,6 +58,8 @@
 #include <QtSolutions/QtColorTriangle>
 #include <QtSolutions/QtColorComboBox>
 
+#include <QtGui/QToolBox>
+
 // CRT
 
 #include <stdlib.h>

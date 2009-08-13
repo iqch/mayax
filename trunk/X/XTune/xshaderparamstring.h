@@ -11,10 +11,17 @@ public:
 
 	virtual XShaderParam* getParameter(SLO_VISSYMDEF* default);
 
+protected:
+	void setup(SLO_VISSYMDEF* arg);
+
+	virtual QString clause();
+
 private:
 
-	void setup(SLO_VISSYMDEF* def);
 	QLineEdit* edString;
+
+	QString str;
+	QByteArray ba;
 
 };
 

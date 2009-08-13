@@ -8,23 +8,30 @@ XShaderParam* XShaderParamString::getParameter(SLO_VISSYMDEF* default)
 	return res;
 };
 
-
 XShaderParamString::XShaderParamString() {}
 
 void XShaderParamString::setup(SLO_VISSYMDEF* arg)
 { 
-	QHBoxLayout* hl = new QHBoxLayout;
-
-	cbEnabled = new QCheckBox;
-	hl->addWidget(cbEnabled);
-
-	lbName = new QLabel(arg->svd_name);
-	hl->addWidget(lbName);
+	XShaderParam::setup(arg);
 
 	edString = new QLineEdit(arg->svd_default.stringval);
 	hl->addWidget(edString);
-
-	setLayout(hl);
 }
 
 XShaderParamString::~XShaderParamString() {}
+
+QString XShaderParamString::clause()
+{
+	QString res;
+
+	if(cbEnabled->isChecked())
+	{
+		res = "string " + lbName->text();
+
+		str = edString->text();
+		ba = str.toAscii();
+		value = (RtPointer)ba.constData();
+	}
+
+	return res;
+};

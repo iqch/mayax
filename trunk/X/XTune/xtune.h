@@ -60,7 +60,7 @@ private:
 	QLabel*			lbShader;
 
 	QWidget*		wdShaderPanel;
-	QGridLayout*	glShaderGrid;
+	QVBoxLayout*	vlShader;
 	QLabel*			lbShaderName;
 	QSpacerItem* glSpacer;
 

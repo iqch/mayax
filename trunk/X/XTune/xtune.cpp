@@ -161,16 +161,24 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 	//sp->addWidget(canvas);
 
 	wdShaderPanel = new QWidget;
-	glShaderGrid = new QGridLayout;
+	vlShader = new QVBoxLayout;
+	vlShader->setMargin(3);
+	vlShader->setSpacing(2);
 
 	lbShaderName = new QLabel("constant");
-	glShaderGrid->addWidget(lbShaderName,0,0,1,3);
+	vlShader->addWidget(lbShaderName);
 
 	glSpacer = new QSpacerItem(1,800,QSizePolicy::Minimum,QSizePolicy::Expanding);
-	glShaderGrid->addItem(glSpacer, 1, 0, 1, 3);
-	wdShaderPanel->setLayout(glShaderGrid);
+	vlShader->addItem(glSpacer);
+	wdShaderPanel->setLayout(vlShader);
 
-	sp->addWidget(wdShaderPanel);
+	QToolBox* tbxRender = new QToolBox;
+
+	tbxRender->addItem(wdShaderPanel,"Shader");
+	
+	
+
+	sp->addWidget(tbxRender);
 
 	//wdShaderPanel->hide();
 	
@@ -738,12 +746,12 @@ void XTune::getShader()
 	wdShaderPanel->show();
 
 	{
-		glShaderGrid->removeItem(glSpacer);
+		vlShader->removeItem(glSpacer);
 	}
 
 	foreach(QWidget* n, shaderGuts)
 	{
-		glShaderGrid->removeWidget(n);
+		vlShader->removeWidget(n);
 		//glShaderGrid->removeChild(n);
 		delete n;
 	}
@@ -771,7 +779,7 @@ void XTune::getShader()
 
 		p = p->getParameter(arg);
 
-		glShaderGrid->addWidget(p,row,0,1,3);
+		vlShader->addWidget(p);
 
 		shaderGuts.append(p);
 
@@ -847,7 +855,7 @@ void XTune::getShader()
 	}
 
 	// ADD SPACING
-	glShaderGrid->addItem(glSpacer, row, 0, 1, 3);
+	vlShader->addItem(glSpacer);
 
 	Slo_EndShader();
 };
