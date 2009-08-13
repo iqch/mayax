@@ -750,8 +750,49 @@ void XTune::assignShader()
 
 	const char* shn = ba.constData();
 
-	RiSurface(shn,RI_NULL);
+	int gcount = shaderGuts.count();
 
+	if(gcount == 0)
+	{
+		RiSurface(shn,RI_NULL);
+		return;
+	}
+
+	RtToken*  tk = new RtToken[gcount+1];
+	RtPointer* vl = new RtPointer[gcount+1];
+
+	int current = 0;
+	foreach(XShaderParam* p, shaderGuts)
+	{
+		QString cl = p->clause();
+		if(cl == "") continue;
+
+		QByteArray ba = cl.toAscii();
+		const char* name = ba.constData();
+
+		tk[current] = new char[cl.count()+1];
+		memset(tk[current],0,cl.count()+1);
+		memcpy(tk[current],name,cl.count());
+
+		vl[current] = p->getData();
+
+		current++;
+	}
+
+	if(current == 0)
+	{
+		RiSurface(shn,RI_NULL);
+		return;
+	}
+
+	tk[current] = RI_NULL;
+	vl[current] = RI_NULL;
+
+	RtToken name = new char[shader.count()+1];
+	memset(name,0,shader.count()+1);
+	memcpy(name,shn,shader.count());
+
+	RiSurfaceV(name,current,tk,vl);
 };
 
 void XTune::getShader()

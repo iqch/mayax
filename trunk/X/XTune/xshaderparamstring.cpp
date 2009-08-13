@@ -28,9 +28,15 @@ QString XShaderParamString::clause()
 	{
 		res = "string " + lbName->text();
 
-		str = edString->text();
+		str = edString->text(); str.replace("\\","/");
 		ba = str.toAscii();
-		value = (RtPointer)ba.constData();
+		const char* data = ba.constData();
+
+		val = new char[str.count()+1];
+		memset(val,0,str.count()+1);
+		memcpy(val,data,str.count());
+
+		value = (RtPointer)&val;
 	}
 
 	return res;

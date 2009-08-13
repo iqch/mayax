@@ -23,6 +23,8 @@ private:
 	QString str;
 	QByteArray ba;
 
+	char* val;
+
 };
 
 #endif // XSHADERPARAMSTRING_H
