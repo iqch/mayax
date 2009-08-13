@@ -1,9 +1,15 @@
 #include "stdafx.h"
 #include "xtune.h"
 
-#include "xglpreview.h"
+#include "xshaderparamfloat.h"
+#include "xshaderparamcolor.h"
+#include "xshaderparamstring.h"
+
+//#include "xglpreview.h"
 
 void riDrawSegment(segment& s, float w);
+
+QHash<SLO_TYPE,XShaderParam*> XTune::paramCreators;
 
 XTune::XTune(QWidget *parent, Qt::WFlags flags)
 	: QMainWindow(parent, flags)
@@ -166,7 +172,7 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 
 	sp->addWidget(wdShaderPanel);
 
-	wdShaderPanel->hide();
+	//wdShaderPanel->hide();
 	
 	setCentralWidget(sp);
 
@@ -177,6 +183,14 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 	// SERVICES
 	dlgOpen = new QFileDialog(this,"Open Bin","/","Binary (*.bin)");
 	dlgShader = new QFileDialog(this,"Open SLO","/","SLO Shader (*.slo)");
+
+	// TYPE HASH
+	if(paramCreators.count() == 0)
+	{
+		paramCreators.insert(SLO_TYPE_STRING, new XShaderParamString);
+		paramCreators.insert(SLO_TYPE_SCALAR, new XShaderParamFloat);
+		paramCreators.insert(SLO_TYPE_COLOR, new XShaderParamColor);
+	}
 }
 
 XTune::~XTune() {}
@@ -727,16 +741,16 @@ void XTune::getShader()
 		glShaderGrid->removeItem(glSpacer);
 	}
 
-	foreach(QWidget* n, shaderNunnies)
+	foreach(QWidget* n, shaderGuts)
 	{
 		glShaderGrid->removeWidget(n);
 		//glShaderGrid->removeChild(n);
 		delete n;
 	}
 
-	shaderNunnies.clear();
+	shaderGuts.clear();
 
-	// ...FILL LAYOUT
+	// FILL LAYOUT
 	lbShaderName->setText(clause);
 	lbShaderName->setAlignment(Qt::AlignHCenter);
 
@@ -748,10 +762,22 @@ void XTune::getShader()
 	{
 		SLO_VISSYMDEF* arg = Slo_GetArgById(i);
 		if(arg == NULL) continue;
-		//if(arg->svd_detail != SLO_DETAIL_UNIFORM) continue;
+
 		if(arg->svd_storage != SLO_STOR_PARAMETER) continue;
+
+		XShaderParam* p = paramCreators[arg->svd_type];
+
+		if(p == NULL) continue;
+
+		p = p->getParameter(arg);
+
+		glShaderGrid->addWidget(p,row,0,1,3);
+
+		shaderGuts.append(p);
+
+		row++;
 		
-		if(arg->svd_type == SLO_TYPE_STRING)
+		/*if(arg->svd_type == SLO_TYPE_STRING)
 		{
 			QLabel* lbProxy = new QLabel();
 			glShaderGrid->addWidget(lbProxy,row,0,1,1);
@@ -768,7 +794,37 @@ void XTune::getShader()
 			row++;
 		}
 		
-		//&& (arg->svd_type != SLO_TYPE_COLOR)
+		if(arg->svd_type == SLO_TYPE_COLOR)
+		{
+			QCheckBox* cbEnable = new QCheckBox(this);
+			glShaderGrid->addWidget(cbEnable,row,0,1,1);
+			shaderNunnies.append(cbEnable);
+
+			QLabel* lbName = new QLabel(arg->svd_name,this);
+			glShaderGrid->addWidget(lbName,row,1,1,1);
+			shaderNunnies.append(lbName);
+
+			QtColorComboBox* ccb = new QtColorComboBox;
+
+			POINT3D* val = arg->svd_default.pointval;
+			QColor C(255*(val->xval),255*(val->yval),255*(val->zval));
+
+			ccb->addColor(C,"default");
+
+			ccb->setColorDialogEnabled(true);
+			glShaderGrid->addWidget(ccb,row,2,1,1);
+			shaderNunnies.append(ccb);
+
+			//QtColorTriangle* ct = new QtColorTriangle;
+			//POINT3D* val = arg->svd_default.pointval;
+			//
+			//QColor C(255*(val->xval),255*(val->yval),255*(val->zval));
+			//ct->setColor(C);
+			//glShaderGrid->addWidget(ct,row,2,1,1);
+			//shaderNunnies.append(ct);
+
+			row++;
+		}
 		
 		if(arg->svd_type == SLO_TYPE_SCALAR)
 		{
@@ -786,7 +842,8 @@ void XTune::getShader()
 			glShaderGrid->addWidget(edString,row,2,1,1);
 			shaderNunnies.append(edString);
 
-			row++;		};
+			row++;
+		};*/
 	}
 
 	// ADD SPACING
