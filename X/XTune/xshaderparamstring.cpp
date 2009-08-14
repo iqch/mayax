@@ -8,7 +8,7 @@ XShaderParam* XShaderParamString::getParameter(SLO_VISSYMDEF* default)
 	return res;
 };
 
-XShaderParamString::XShaderParamString() {}
+XShaderParamString::XShaderParamString() : val(NULL) {}
 
 void XShaderParamString::setup(SLO_VISSYMDEF* arg)
 { 
@@ -32,6 +32,7 @@ QString XShaderParamString::clause()
 		ba = str.toAscii();
 		const char* data = ba.constData();
 
+		if(val != NULL) delete [] val;
 		val = new char[str.count()+1];
 		memset(val,0,str.count()+1);
 		memcpy(val,data,str.count());
