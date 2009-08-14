@@ -218,10 +218,14 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 		vlImager->setMargin(2);
 		vlImager->setSpacing(2);
 
+		cbUseImager = new QCheckBox("Enable Imager");
+		cbUseImager->setChecked(false);
+		vlImager->addWidget(cbUseImager);
+
 		QHBoxLayout* hl = new QHBoxLayout;
 		hl->setMargin(0);
 		hl->setSpacing(2);
-
+		
 		lbImagerName = new QLabel("background");
 		hl->addWidget(lbImagerName);
 
@@ -239,7 +243,7 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 		POINT3D white = {1.0,1.0,1.0};
 
 		arg.svd_default.pointval = &white;
-		arg.svd_name = "color";
+		arg.svd_name = "background";
 
 		XShaderParamColor C;
 
@@ -652,6 +656,7 @@ void XTune::renderFrame()
 	srand(0);
 
 	RiBegin("launch:prman");
+	//RiBegin("c:/out.rib");
 
 	RiFrameBegin(currentFrame);
 
@@ -692,8 +697,6 @@ void XTune::renderFrame()
 		}
 	}
 
-
-
 	RiFormat(F.width*scale,F.height*scale,1.0);
 
 	RiDisplay("STROKES",RI_FRAMEBUFFER,RI_RGBA,RI_NULL);
@@ -707,16 +710,14 @@ void XTune::renderFrame()
 
 	RiWorldBegin();
 
+	if(cbUseImager->isChecked()) assignImager();
+
 	if(cbUseBackground->isChecked())
 	{
 		RiSurface(RI_CONSTANT,RI_NULL);
 
 		RtFloat background[] = { F.background[0]/255.0f, F.background[1]/255.0f, F.background[2]/255.0f };
 		RiColor(background);
-
-		//RiImager("background","color",background,RI_NULL);
-		//RiImager("background","color",background,RI_NULL);
-		//RiImager(RI_CONSTANT,RI_NULL);
 
 		RiAttributeBegin();
 			RiCoordSysTransform(RI_CAMERA);
@@ -820,7 +821,7 @@ void riDrawSegment(segment& s, float w)
 
 void XTune::assignShader()
 {
-	QString shader = shaderPath; // lbShader->text();
+	QString shader = shaderPath;
 
 	shader.replace("\\","/");
 
@@ -845,8 +846,64 @@ void XTune::assignShader()
 	RtToken*  tk = new RtToken[gcount];
 	RtPointer* vl = new RtPointer[gcount];
 
+	int current = collectTokens(shaderGuts,tk,vl);
+
+	if(current == 0)
+	{
+		RiSurface(shn,RI_NULL);
+		return;
+	}
+
+	RiSurfaceV((const RtToken)shn,current,tk,vl);
+
+	for(int i=0;i<current;i++) delete [] tk[i];
+};
+
+void XTune::assignImager()
+{
+	QString shader = imagerPath;
+
+	shader.replace("\\","/");
+
+	if(shader.indexOf(":") != -1)
+	{
+		shader.replace(":","");
+		shader = "//" + shader;
+	}
+
+	QByteArray ba = shader.toAscii();
+
+	const char* shn = ba.constData();
+
+	int gcount = imagerGuts.count();
+
+	if(gcount == 0)
+	{
+		RiImager((const RtToken)shn,RI_NULL);
+		return;
+	}
+
+	RtToken*  tk = new RtToken[gcount];
+	RtPointer* vl = new RtPointer[gcount];
+
+	int current = collectTokens(imagerGuts,tk,vl);
+
+	if(current == 0)
+	{
+		RiImager((const RtToken)shn,RI_NULL);
+		return;
+	}
+
+	RiImagerV((const RtToken)shn,current,tk,vl);
+
+	for(int i=0;i<current;i++) delete [] tk[i];
+};
+
+int XTune::collectTokens(QList<XShaderParam*> guts, RtToken* tk, RtPointer* vl)
+{
 	int current = 0;
-	foreach(XShaderParam* p, shaderGuts)
+
+	foreach(XShaderParam* p, guts)
 	{
 		QString cl = p->clause();
 		if(cl == "") continue;
@@ -863,27 +920,7 @@ void XTune::assignShader()
 		current++;
 	}
 
-	if(current == 0)
-	{
-		RiSurface(shn,RI_NULL);
-		return;
-	}
-
-	//tk[current] = RI_NULL;
-	//vl[current] = RI_NULL;
-
-	/*RtToken name = new char[shader.count()+1];
-	memset(name,0,shader.count()+1);
-	memcpy(name,shn,shader.count());*/
-
-	RiSurfaceV((const RtToken)shn,current,tk,vl);
-
-	for(int i=0;i<current;i++) delete [] tk[i];
-};
-
-int XTune::collectTokens(QList<XShaderParam*> guts, RtToken* tk, RtPointer* vl)
-{
-	return 0;
+	return current;
 }
 
 void XTune::getShader()
@@ -981,7 +1018,7 @@ void XTune::getImager()
 
 	const char* clause = Slo_GetName();
 
-	shaderPath = path;
+	imagerPath = path;
 
 	// CLEAR LAYOUT
 	{
