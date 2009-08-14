@@ -61,6 +61,7 @@ private:
 	QComboBox*	cbbBucketSize;
 
 	// IMAGER SECTION
+	QCheckBox*		cbUseImager;
 	QVBoxLayout*	vlImager;
 	QLabel*				lbImagerName;
 	QSpacerItem*	glImagerSpacer;
@@ -74,10 +75,7 @@ private:
 	QFileDialog*		dlgShader;
 	QString				shaderPath;
 
-
-
 	// INTERNAL FIELDS
-
 
 	QList<segment> segments;
 
@@ -92,6 +90,7 @@ private:
 	// HELPERS
 
 	void assignShader();
+	void assignImager();
 
 	int collectTokens(QList<XShaderParam*> guts, RtToken* tk, RtPointer* vl);
 
