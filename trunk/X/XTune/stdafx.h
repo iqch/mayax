@@ -60,6 +60,8 @@
 
 #include <QtGui/QToolBox>
 
+#include <QtGui/QComboBox>
+
 // CRT
 
 #include <stdlib.h>

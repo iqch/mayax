@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "xshaderparam.h"
 
-XShaderParam::XShaderParam(QWidget *parent) : QWidget(parent) { }
+XShaderParam::XShaderParam(QWidget *parent) : QWidget(parent), value(NULL) { }
 XShaderParam::~XShaderParam() { }
 
 void XShaderParam::setup(SLO_VISSYMDEF* arg)

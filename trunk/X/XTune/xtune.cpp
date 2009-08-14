@@ -130,6 +130,8 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 
 	QToolBox* tbxRender = new QToolBox;
 
+	//glSpacer = new QSpacerItem(1,800,QSizePolicy::Minimum,QSizePolicy::Expanding);
+
 	// RENDER SECTION
 	{
 		QWidget*wdRenderPanel = new QWidget;
@@ -179,13 +181,82 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 			hl->addWidget(edResFactor);
 
 			vl->addLayout(hl);
+
 		}
 
+		{
+			QHBoxLayout* hl = new QHBoxLayout;
+			hl->setMargin(0);
+			hl->setSpacing(2);
+
+			hl->addWidget(new QLabel("Bucket Size"));
+
+			cbbBucketSize = new QComboBox;
+
+			QStringList items;
+
+			items << "16" << "32" << "64" << "128" << "256";
+
+			cbbBucketSize->addItems(items);
+
+			hl->addWidget(cbbBucketSize);
+
+			vl->addLayout(hl);
+		}
+
+		vl->addSpacerItem(new QSpacerItem(1,800,QSizePolicy::Minimum,QSizePolicy::Expanding));
 		wdRenderPanel->setLayout(vl);
 
-		wdRenderPanel->setFixedHeight(100);
-
 		tbxRender->addItem(wdRenderPanel,"Render");
+	}
+
+	// IMAGER SECTION
+	{
+		QWidget* wdImager = new QWidget;
+
+		vlImager = new QVBoxLayout;
+		vlImager->setMargin(2);
+		vlImager->setSpacing(2);
+
+		QHBoxLayout* hl = new QHBoxLayout;
+		hl->setMargin(0);
+		hl->setSpacing(2);
+
+		lbImagerName = new QLabel("background");
+		hl->addWidget(lbImagerName);
+
+		QPushButton* btnChoose = new QPushButton("Browse...");
+		connect(btnChoose,SIGNAL(clicked(bool)),SLOT(getImager()));
+		hl->addWidget(btnChoose);
+
+
+		vlImager->addLayout(hl);
+
+		imagerPath = "background";
+
+		SLO_VISSYMDEF arg;
+
+		POINT3D white = {1.0,1.0,1.0};
+
+		arg.svd_default.pointval = &white;
+		arg.svd_name = "color";
+
+		XShaderParamColor C;
+
+		XShaderParam* p = C.getParameter(&arg);
+
+		imagerGuts.append(p);
+
+		vlImager->addWidget(p);
+
+		glImagerSpacer = new QSpacerItem(1,800,QSizePolicy::Minimum,QSizePolicy::Expanding);
+		vlImager->addSpacerItem(glImagerSpacer);
+		wdImager->setLayout(vlImager);
+
+		//QSize sz = wdImager->sizeHint();
+		//wdImager->setFixedHeight(sz.height());
+
+		tbxRender->addItem(wdImager,"Imager");
 	}
 
 	// SHADER SECTION
@@ -202,7 +273,6 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 		shaderPath = "constant";
 
 		QPushButton* btnChoose = new QPushButton("Browse...");
-		//btnChoose->setFlat(true);
 		connect(btnChoose,SIGNAL(clicked(bool)),SLOT(getShader()));
 		hl->addWidget(btnChoose);
 
@@ -212,8 +282,8 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 
 		vlShader->addLayout(hl);
 
-		glSpacer = new QSpacerItem(1,800,QSizePolicy::Minimum,QSizePolicy::Expanding);
-		vlShader->addItem(glSpacer);
+		glShaderSpacer = new QSpacerItem(1,800,QSizePolicy::Minimum,QSizePolicy::Expanding);
+		vlShader->addItem(glShaderSpacer);
 		wdShaderPanel->setLayout(vlShader);
 
 		tbxRender->addItem(wdShaderPanel,"Shader");
@@ -231,6 +301,7 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 	// SERVICES
 	dlgOpen = new QFileDialog(this,"Open Bin","/","Binary (*.bin)");
 	dlgShader = new QFileDialog(this,"Open SLO","/","SLO Shader (*.slo)");
+	dlgImager = new QFileDialog(this,"Open SLO","/","SLO Shader (*.slo)");
 
 	// TYPE HASH
 	if(paramCreators.count() == 0)
@@ -584,6 +655,19 @@ void XTune::renderFrame()
 
 	RiFrameBegin(currentFrame);
 
+	// OPTIONS
+	RtToken order = "spiral";
+	RiOption("bucket","string order",&order,RI_NULL);
+
+	int bucketChoice = cbbBucketSize->currentIndex();
+
+	int size = 16 << bucketChoice;
+	int sizes[2] = { size, size };
+
+	RiOption("limits","bucketsize", &sizes, RI_NULL);
+
+	// IMAGERY
+
 	RiIdentity();
 	RiPixelSamples(3,3);
 	RiPixelFilter(RiTriangleFilter,2,2);
@@ -758,8 +842,8 @@ void XTune::assignShader()
 		return;
 	}
 
-	RtToken*  tk = new RtToken[gcount+1];
-	RtPointer* vl = new RtPointer[gcount+1];
+	RtToken*  tk = new RtToken[gcount];
+	RtPointer* vl = new RtPointer[gcount];
 
 	int current = 0;
 	foreach(XShaderParam* p, shaderGuts)
@@ -785,15 +869,22 @@ void XTune::assignShader()
 		return;
 	}
 
-	tk[current] = RI_NULL;
-	vl[current] = RI_NULL;
+	//tk[current] = RI_NULL;
+	//vl[current] = RI_NULL;
 
-	RtToken name = new char[shader.count()+1];
+	/*RtToken name = new char[shader.count()+1];
 	memset(name,0,shader.count()+1);
-	memcpy(name,shn,shader.count());
+	memcpy(name,shn,shader.count());*/
 
-	RiSurfaceV(name,current,tk,vl);
+	RiSurfaceV((const RtToken)shn,current,tk,vl);
+
+	for(int i=0;i<current;i++) delete [] tk[i];
 };
+
+int XTune::collectTokens(QList<XShaderParam*> guts, RtToken* tk, RtPointer* vl)
+{
+	return 0;
+}
 
 void XTune::getShader()
 {
@@ -823,7 +914,7 @@ void XTune::getShader()
 
 	// CLEAR LAYOUT
 	{
-		vlShader->removeItem(glSpacer);
+		vlShader->removeItem(glShaderSpacer);
 	}
 
 	foreach(QWidget* n, shaderGuts)
@@ -839,7 +930,7 @@ void XTune::getShader()
 	lbShaderName->setText(clause);
 	lbShaderName->setAlignment(Qt::AlignHCenter);
 
-	int row = 1;
+	//int row = 1;
 
 	int nargs = Slo_GetNArgs();
 
@@ -859,83 +950,79 @@ void XTune::getShader()
 		vlShader->addWidget(p);
 
 		shaderGuts.append(p);
-
-		row++;
-		
-		/*if(arg->svd_type == SLO_TYPE_STRING)
-		{
-			QLabel* lbProxy = new QLabel();
-			glShaderGrid->addWidget(lbProxy,row,0,1,1);
-			shaderNunnies.append(lbProxy);
-
-			QLabel* lbName = new QLabel(arg->svd_name);
-			glShaderGrid->addWidget(lbName,row,1,1,1);
-			shaderNunnies.append(lbName);
-
-			QLineEdit* edString = new QLineEdit(arg->svd_default.stringval);
-			glShaderGrid->addWidget(edString,row,2,1,1);
-			shaderNunnies.append(edString);
-
-			row++;
-		}
-		
-		if(arg->svd_type == SLO_TYPE_COLOR)
-		{
-			QCheckBox* cbEnable = new QCheckBox(this);
-			glShaderGrid->addWidget(cbEnable,row,0,1,1);
-			shaderNunnies.append(cbEnable);
-
-			QLabel* lbName = new QLabel(arg->svd_name,this);
-			glShaderGrid->addWidget(lbName,row,1,1,1);
-			shaderNunnies.append(lbName);
-
-			QtColorComboBox* ccb = new QtColorComboBox;
-
-			POINT3D* val = arg->svd_default.pointval;
-			QColor C(255*(val->xval),255*(val->yval),255*(val->zval));
-
-			ccb->addColor(C,"default");
-
-			ccb->setColorDialogEnabled(true);
-			glShaderGrid->addWidget(ccb,row,2,1,1);
-			shaderNunnies.append(ccb);
-
-			//QtColorTriangle* ct = new QtColorTriangle;
-			//POINT3D* val = arg->svd_default.pointval;
-			//
-			//QColor C(255*(val->xval),255*(val->yval),255*(val->zval));
-			//ct->setColor(C);
-			//glShaderGrid->addWidget(ct,row,2,1,1);
-			//shaderNunnies.append(ct);
-
-			row++;
-		}
-		
-		if(arg->svd_type == SLO_TYPE_SCALAR)
-		{
-			QCheckBox* cbEnable = new QCheckBox(this);
-			glShaderGrid->addWidget(cbEnable,row,0,1,1);
-			shaderNunnies.append(cbEnable);
-
-			QLabel* lbName = new QLabel(arg->svd_name,this);
-			glShaderGrid->addWidget(lbName,row,1,1,1);
-			shaderNunnies.append(lbName);
-
-			QLineEdit* edString = new QLineEdit(QString("%1").arg(*(arg->svd_default.scalarval)),this);
-			QDoubleValidator* dv = new QDoubleValidator(-100000000000,10000000000,8,this);
-			edString->setValidator(dv);
-			glShaderGrid->addWidget(edString,row,2,1,1);
-			shaderNunnies.append(edString);
-
-			row++;
-		};*/
 	}
 
 	// ADD SPACING
-	vlShader->addItem(glSpacer);
+	vlShader->addItem(glShaderSpacer);
 
 	Slo_EndShader();
 };
 
+void XTune::getImager()
+{
+	if(!dlgImager->exec()) return;
 
+	QStringList files = dlgImager->selectedFiles();
+
+	QString fileName = files[0];
+
+	QFileInfo fi(fileName);
+	QString path = fi.absolutePath() + "/" + fi.completeBaseName();
+
+	QByteArray ba = path.toAscii();
+	const char* shName = ba.constData();
+
+	int shader = Slo_SetShader(shName);
+	if(shader != 0) return;
+
+	SLO_TYPE type = Slo_GetType();
+
+	if(type != SLO_TYPE_UNKNOWN) return;
+
+	const char* clause = Slo_GetName();
+
+	shaderPath = path;
+
+	// CLEAR LAYOUT
+	{
+		vlImager->removeItem(glImagerSpacer);
+	}
+
+	foreach(QWidget* n, imagerGuts)
+	{
+		vlImager->removeWidget(n);
+		delete n;
+	}
+
+	imagerGuts.clear();
+
+	// FILL LAYOUT
+	lbImagerName->setText(clause);
+	lbImagerName->setAlignment(Qt::AlignHCenter);
+
+	int nargs = Slo_GetNArgs();
+
+	for(int i=1;i<=nargs;i++)
+	{
+		SLO_VISSYMDEF* arg = Slo_GetArgById(i);
+		if(arg == NULL) continue;
+
+		if(arg->svd_storage != SLO_STOR_PARAMETER) continue;
+
+		XShaderParam* p = paramCreators[arg->svd_type];
+
+		if(p == NULL) continue;
+
+		p = p->getParameter(arg);
+
+		vlImager->addWidget(p);
+
+		imagerGuts.append(p);
+	}
+
+	// ADD SPACING
+	vlImager->addItem(glImagerSpacer);
+
+	Slo_EndShader();
+}
 

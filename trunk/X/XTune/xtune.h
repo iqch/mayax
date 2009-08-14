@@ -35,6 +35,7 @@ private slots:
 	void renderFrame();
 
 	void getShader();
+	void getImager();
 
 private:
 	QStatusBar*	statusBar;
@@ -53,22 +54,26 @@ private:
 
 	QFileDialog*	dlgOpen;
 
-	QToolBar*		tbShader;
-	QFileDialog*	dlgShader;
-	QString			shaderPath;
-
-	//QLabel*			lbShader;
-
-	//QWidget*		wdShaderPanel;
-	QVBoxLayout*	vlShader;
-	QLabel*			lbShaderName;
-	QSpacerItem* glSpacer;
-
+	// RENDER SECTION
 	QSlider*		slResize;
-
 	QLineEdit*		edResFactor;
-
 	QCheckBox*	cbUseBackground;
+	QComboBox*	cbbBucketSize;
+
+	// IMAGER SECTION
+	QVBoxLayout*	vlImager;
+	QLabel*				lbImagerName;
+	QSpacerItem*	glImagerSpacer;
+	QFileDialog*		dlgImager;
+	QString				imagerPath;
+
+	// SHADER SECTION
+	QVBoxLayout*	vlShader;
+	QLabel*				lbShaderName;
+	QSpacerItem*	glShaderSpacer;
+	QFileDialog*		dlgShader;
+	QString				shaderPath;
+
 
 
 	// INTERNAL FIELDS
@@ -88,10 +93,10 @@ private:
 
 	void assignShader();
 
-	//QHash<QString,QWidget*> shaderGuts;
-	//QList<QWidget*> shaderNunnies;
+	int collectTokens(QList<XShaderParam*> guts, RtToken* tk, RtPointer* vl);
 
 	QList<XShaderParam*> shaderGuts;
+	QList<XShaderParam*> imagerGuts;
 
 	static QHash<SLO_TYPE,XShaderParam*> paramCreators;
 };
