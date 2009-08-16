@@ -11,8 +11,10 @@
 //#include <QtCore>
 #include <QtCore/QDataStream>
 #include <QtCore/QFile>
+#include <QtCore/QEvent>
 
 //#include <QtGui>
+#include <QtGui/QApplication>
 #include <QtGui/QMainWindow>
 
 #include <QtGui/QToolBar>
@@ -59,8 +61,12 @@
 #include <QtSolutions/QtColorComboBox>
 
 #include <QtGui/QToolBox>
+#include <QtGui/QGroupBox>
 
 #include <QtGui/QComboBox>
+
+#include <QtGui/QScrollArea>
+#include <QtGui/QTextEdit>
 
 // CRT
 
@@ -71,6 +77,9 @@
 #include <ri.h>
 #include <ric.h>
 #include <slo.h>
+
+#include <ndspy.h>
+
 
 // DATA STRUCTS
 typedef struct _segment {
