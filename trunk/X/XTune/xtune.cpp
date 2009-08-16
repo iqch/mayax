@@ -5,7 +5,41 @@
 #include "xshaderparamcolor.h"
 #include "xshaderparamstring.h"
 
+#include "xopenimageevent.h"
+
 //#include "xglpreview.h"
+
+PtDspyError DirectDspyImageOpen(PtDspyImageHandle * image,
+								const char *drivername,
+								const char *filename,
+								int width,
+								int height,
+								int paramCount,
+								const UserParameter *parameters,
+								int iFormatCount,
+								PtDspyDevFormat *format,
+								PtFlagStuff *flagstuff);
+
+PtDspyError DirectDspyImageData(PtDspyImageHandle image,
+								int xmin,
+								int xmax_plus_one,
+								int ymin,
+								int ymax_plus_one,
+								int entrysize,
+								const unsigned char *data);
+
+PtDspyError DirectDspyImageClose(PtDspyImageHandle);
+
+PtDspyError DirectDspyImageQuery(PtDspyImageHandle,
+								 PtDspyQueryType,
+								 int ,
+								 void *);
+
+PtDspyError DirectDspyImageActiveRegion(PtDspyImageHandle image,
+										int xmin,
+										int xmax_plus_one,
+										int ymin,
+										int ymax_plus_one);
 
 void riDrawSegment(segment& s, float w);
 
@@ -61,22 +95,6 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 		tb->addWidget(slWidth);
 	}
 
-	// TOOL BAR RENDER
-	{
-		//QToolBar* tb = new QToolBar("Render");
-		//addToolBar(Qt::ToolBarArea::TopToolBarArea,tb);
-
-		//cbUseBackground = new QCheckBox("background");
-		//cbUseBackground->setChecked(true);
-
-		//tb->addWidget(cbUseBackground);
-
-		//QPushButton* btnPreview = new QPushButton("Render...");
-		////btnPreview->setFlat(true);
-		//connect(btnPreview,SIGNAL(clicked(bool)),SLOT(renderFrame()));
-		//tb->addWidget(btnPreview);
-	}
-
 	// TOOLBAR REDUCE
 	{
 		QToolBar* tb = new QToolBar("Reduce");
@@ -97,23 +115,6 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 		tb->addWidget(slReduce);
 	}
 	
-	// TOOL BAR SHADER
-	{
-		//tbShader = new QToolBar("Shader");
-
-		//shaderPath = "constant";
-
-		//addToolBar(Qt::ToolBarArea::BottomToolBarArea,tbShader);
-
-		//QPushButton* btnChoose = new QPushButton("Browse...");
-		////btnChoose->setFlat(true);
-		//connect(btnChoose,SIGNAL(clicked(bool)),SLOT(getShader()));
-		//tbShader->addWidget(btnChoose);
-
-		//lbShader = new QLabel("constant");
-		//tbShader->addWidget(lbShader);
-	}
-
 	// MAIN SPLITTER
 
 	QSplitter *sp = new QSplitter(Qt::Horizontal);
@@ -128,13 +129,12 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 
 	connect(frameList,SIGNAL(currentRowChanged(int)),SLOT(frameSelected(int)));
 
-	QToolBox* tbxRender = new QToolBox;
-
-	//glSpacer = new QSpacerItem(1,800,QSizePolicy::Minimum,QSizePolicy::Expanding);
+	QWidget* wdTools = new QWidget;
+	QVBoxLayout* vlTools = new QVBoxLayout;
 
 	// RENDER SECTION
 	{
-		QWidget*wdRenderPanel = new QWidget;
+		QGroupBox* gb = new QGroupBox("Render");
 
 		QVBoxLayout* vl = new QVBoxLayout;
 		vl->setMargin(2);
@@ -204,23 +204,21 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 			vl->addLayout(hl);
 		}
 
-		vl->addSpacerItem(new QSpacerItem(1,800,QSizePolicy::Minimum,QSizePolicy::Expanding));
-		wdRenderPanel->setLayout(vl);
+		gb->setLayout(vl);
 
-		tbxRender->addItem(wdRenderPanel,"Render");
+		vlTools->addWidget(gb);
 	}
 
 	// IMAGER SECTION
 	{
-		QWidget* wdImager = new QWidget;
+		gbImager = new QGroupBox("Imager");
+
+		gbImager->setCheckable(true);
+		gbImager->setChecked(true);
 
 		vlImager = new QVBoxLayout;
 		vlImager->setMargin(2);
 		vlImager->setSpacing(2);
-
-		cbUseImager = new QCheckBox("Enable Imager");
-		cbUseImager->setChecked(false);
-		vlImager->addWidget(cbUseImager);
 
 		QHBoxLayout* hl = new QHBoxLayout;
 		hl->setMargin(0);
@@ -253,19 +251,13 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 
 		vlImager->addWidget(p);
 
-		glImagerSpacer = new QSpacerItem(1,800,QSizePolicy::Minimum,QSizePolicy::Expanding);
-		vlImager->addSpacerItem(glImagerSpacer);
-		wdImager->setLayout(vlImager);
-
-		//QSize sz = wdImager->sizeHint();
-		//wdImager->setFixedHeight(sz.height());
-
-		tbxRender->addItem(wdImager,"Imager");
+		gbImager->setLayout(vlImager);
+		vlTools->addWidget(gbImager);
 	}
 
 	// SHADER SECTION
 	{
-		QWidget*wdShaderPanel = new QWidget;
+		QGroupBox* gb = new QGroupBox("Shader");
 
 		QHBoxLayout* hl = new QHBoxLayout;
 		hl->setMargin(0);
@@ -286,15 +278,25 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 
 		vlShader->addLayout(hl);
 
-		glShaderSpacer = new QSpacerItem(1,800,QSizePolicy::Minimum,QSizePolicy::Expanding);
-		vlShader->addItem(glShaderSpacer);
-		wdShaderPanel->setLayout(vlShader);
+		gb->setLayout(vlShader);
 
-		tbxRender->addItem(wdShaderPanel,"Shader");
+		vlTools->addWidget(gb);
 	}
 
+	txtLog = new QTextEdit;
+	txtLog->setReadOnly(true);
 
-	sp->addWidget(tbxRender);
+	vlTools->addWidget(txtLog);
+
+	//QSpacerItem* spacer = new QSpacerItem(1,800,QSizePolicy::Minimum,QSizePolicy::Expanding);
+	//vlTools->addItem(spacer);
+
+	wdTools->setLayout(vlTools);
+
+	//QScrollArea* sa = new QScrollArea;
+	//sa->setWidget(wdTools);
+
+	sp->addWidget(wdTools);
 
 	setCentralWidget(sp);
 
@@ -317,6 +319,19 @@ XTune::XTune(QWidget *parent, Qt::WFlags flags)
 }
 
 XTune::~XTune() {}
+
+bool XTune::event(QEvent *e)
+{
+	if(e->type() == XOpenImageEvent::tag)
+	{
+		XOpenImageEvent* E = dynamic_cast<XOpenImageEvent*>(e);
+		txtLog->append(E->drivername + " " + E->filename + "\n");
+		txtLog->append(QString("width: %1 \t\t height %2\n").arg(E->width).arg(E->height));
+		//delete e;
+		return true;
+	}
+	return QMainWindow::event(e);
+};
 
 void XTune::openFile() 
 {
@@ -655,8 +670,24 @@ void XTune::renderFrame()
 
 	srand(0);
 
-	RiBegin("launch:prman");
+	//RiBegin("launch:prman");
+	RiBegin("launch:prman? -t -ctrl $ctrlin $ctrlout -dspy $dspyin $dspyout -xcpt $xcptin");
 	//RiBegin("c:/out.rib");
+
+	const char* driverName = "xtune";
+	const PtDspyDriverFunctionTable *pTable;
+
+	PtDspyDriverFunctionTable dt;
+	dt.Version = k_PtDriverCurrentVersion;
+	dt.pOpen  = DirectDspyImageOpen;
+	dt.pWrite = DirectDspyImageData;
+	dt.pClose = DirectDspyImageClose;
+	dt.pQuery = DirectDspyImageQuery;
+	dt.pActiveRegion = DirectDspyImageActiveRegion;
+
+
+	PtDspyError linkStat = DspyRegisterDriverTable(driverName, &dt);
+
 
 	RiFrameBegin(currentFrame);
 
@@ -699,7 +730,8 @@ void XTune::renderFrame()
 
 	RiFormat(F.width*scale,F.height*scale,1.0);
 
-	RiDisplay("STROKES",RI_FRAMEBUFFER,RI_RGBA,RI_NULL);
+	//RiDisplay("STROKES",RI_FRAMEBUFFER,RI_RGBA,RI_NULL);
+	RiDisplay("STROKES","xtune",RI_RGBA,RI_NULL);
 
 	RiClipping(0.001,1001);
 
@@ -707,10 +739,9 @@ void XTune::renderFrame()
 
 	RiScreenWindow(0,F.width,F.height,0);
 
+	if(gbImager->isChecked()) assignImager();
 
 	RiWorldBegin();
-
-	if(cbUseImager->isChecked()) assignImager();
 
 	if(cbUseBackground->isChecked())
 	{
@@ -745,8 +776,6 @@ void XTune::renderFrame()
 				float r = float(rnd)/RAND_MAX;
 				if(r > reduceFactor) continue;
 			}
-			//float w = 1.0;
-			//if(useWidth) w = wTune*(s.width[0]+s.width[1])/2;
 
 			riDrawSegment(s, useWidth ? wTune : 1.0);
 
@@ -950,9 +979,9 @@ void XTune::getShader()
 	shaderPath = path;
 
 	// CLEAR LAYOUT
-	{
-		vlShader->removeItem(glShaderSpacer);
-	}
+	//{
+	//	vlShader->removeItem(glShaderSpacer);
+	//}
 
 	foreach(QWidget* n, shaderGuts)
 	{
@@ -990,7 +1019,7 @@ void XTune::getShader()
 	}
 
 	// ADD SPACING
-	vlShader->addItem(glShaderSpacer);
+	//vlShader->addItem(glShaderSpacer);
 
 	Slo_EndShader();
 };
@@ -1021,9 +1050,9 @@ void XTune::getImager()
 	imagerPath = path;
 
 	// CLEAR LAYOUT
-	{
-		vlImager->removeItem(glImagerSpacer);
-	}
+	//{
+	//	vlImager->removeItem(glImagerSpacer);
+	//}
 
 	foreach(QWidget* n, imagerGuts)
 	{
@@ -1058,7 +1087,7 @@ void XTune::getImager()
 	}
 
 	// ADD SPACING
-	vlImager->addItem(glImagerSpacer);
+	//vlImager->addItem(glImagerSpacer);
 
 	Slo_EndShader();
 }

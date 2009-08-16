@@ -1,13 +1,21 @@
 #include "stdafx.h"
 #include "xtune.h"
-#include <QtGui/QApplication>
+
+#include "xopenimageevent.h"
+
+XTune* mainWindow = NULL;
+
+
 
 int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
 	a.setStyle("Plastique");
-	XTune w;
-	w.show();
+
+	XOpenImageEvent::tag = QEvent::registerEventType();
+
+	mainWindow = new XTune;
+	mainWindow->show();
 	return a.exec();
 }
 

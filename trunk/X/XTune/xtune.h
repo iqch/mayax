@@ -16,6 +16,8 @@ public:
 	XTune(QWidget *parent = 0, Qt::WFlags flags = 0);
 	~XTune();
 
+	virtual bool event(QEvent *e);
+
 private slots:
 	void openFile();
 	void saveFile();
@@ -54,6 +56,8 @@ private:
 
 	QFileDialog*	dlgOpen;
 
+	QTextEdit*		txtLog;
+
 	// RENDER SECTION
 	QSlider*		slResize;
 	QLineEdit*		edResFactor;
@@ -61,17 +65,17 @@ private:
 	QComboBox*	cbbBucketSize;
 
 	// IMAGER SECTION
-	QCheckBox*		cbUseImager;
+	QGroupBox*		gbImager;
 	QVBoxLayout*	vlImager;
 	QLabel*				lbImagerName;
-	QSpacerItem*	glImagerSpacer;
+	//QSpacerItem*	glImagerSpacer;
 	QFileDialog*		dlgImager;
 	QString				imagerPath;
 
 	// SHADER SECTION
 	QVBoxLayout*	vlShader;
 	QLabel*				lbShaderName;
-	QSpacerItem*	glShaderSpacer;
+	//QSpacerItem*	glShaderSpacer;
 	QFileDialog*		dlgShader;
 	QString				shaderPath;
 
