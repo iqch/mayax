@@ -1,0 +1,2 @@
+Autodesk Maya FX-geometry exporter to Corel Painter scripts.
+Exports PaintFX, Particles, Hair, Toon geometry. A lot of modes of exporting - layered, PSD, depth-sorted, depth-based visibility and thickness
